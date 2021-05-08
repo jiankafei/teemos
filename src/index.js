@@ -3,7 +3,7 @@ import {
   localStore,
   getRandomValue,
 } from './utils';
-import pkg from './package.json';
+import pkg from '../package.json';
 
 // 默认设置
 const defaultOptions = {

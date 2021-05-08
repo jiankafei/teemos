@@ -9,7 +9,7 @@ const dev = !!import.meta.ROLLUP_WATCH;
 console.log('sourcemap', dev);
 
 export default {
-  input: 'index.js',
+  input: 'src/index.js',
   output: [
     {
       file: 'dist/index.js',
@@ -38,6 +38,7 @@ export default {
   ],
   watch: {
     chokidar: true,
-    include: 'index.js',
+    include: 'src/**',
+    exclude: 'node_modules/**',
   },
 };
