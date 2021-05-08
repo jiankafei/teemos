@@ -2,9 +2,6 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import bp from './bp.es';
-// import bp from '../../../dist/index.es';
-
-// console.log(bp);
 
 bp.init({
   dsn: 'http://www.exp.com/dsn',

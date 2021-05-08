@@ -19,7 +19,7 @@ const defaultOptions = {
   // 单页应用的发布路径，默认为/
   single_page_public_path: '/',
   // 开启调试
-  debug: true,
+  debug: false,
 };
 
 // 状态信息
