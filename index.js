@@ -30,19 +30,16 @@ const state = Object.create(null);
 // 挂载用户代理数据
 state.userAgentData = parseUserAgent();
 
-// 挂载全局预制属性
-state.preset = new Map(Object.entries({
+// 挂载全局预置属性
+state.preset = {
   $sdk_version: pkg.version,
   $sdk_type: 'web',
-  $title: document.title,
-  $url: location.href,
-  $url_path: location.pathname,
   $user_agent: navigator.userAgent,
   $browser_brand: state.userAgentData.brand,
   $browser_version: state.userAgentData.version,
   $language: navigator.language,
   $platform: navigator.platform,
-}));
+};
 
 // 通过图片发送信息
 // 协议必须一致
@@ -76,16 +73,22 @@ let sendMethod;
 const track = ($event_type, payload, callback) => {
   const message = {
     $event_type,
-    ...Object.fromEntries(state.preset),
+    ...state.preset,
     ...payload,
   };
   // 使用本地发送时间
   if (state.options.use_client_time) {
     message.$timestamp = Date.now();
   }
+  // 页面相关预置属性
+  message.$title = document.title;
+  message.$url = location.href;
+  message.$url_path = location.pathname;
+  // debug
   if (state.options.debug) {
     console.log(message);
   }
+  // 发送
   sendMethod(message, callback);
 };
 
@@ -135,7 +138,6 @@ const trackWebClick = () => {
   // 获取选择器
   const getSelectorFromPath = (path) => {
     const sels = [];
-    // console.log('getSelectorFromPath', path);
     for (const el of path) {
       if (el.id) {
         sels.unshift(`#${el.id}`);
@@ -179,10 +181,11 @@ const trackWebClick = () => {
     let trackedEL = ev.target;
     if (trackedEL.nodeType !== 1) return;
     if (trackedEL.tagName === 'BODY' || trackedEL.tagName === 'HTML') return;
+    const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
     // 追踪 a button 点击
-    const clickElIndex = ev.path.findIndex(el => el.tagName === 'A' || 'BUTTON');
+    const clickElIndex = composedPath.findIndex(el => el.tagName === 'A' || 'BUTTON');
     if (clickElIndex !== -1) {
-      const clickEl = ev.path[clickElIndex];
+      const clickEl = composedPath[clickElIndex];
       if (
         clickEl.tagName === 'A' &&
         /^https?:\/\//.test(clickEl.href) &&
@@ -192,7 +195,7 @@ const trackWebClick = () => {
         // 有效可刷新链接
         try {
           const clickElURL = new URL(clickEl.href);
-          const payload = getClickPayload(clickEl, ev.path.slice(clickElIndex));
+          const payload = getClickPayload(clickEl, composedPath.slice(clickElIndex));
           if (
             state.options.track_single_page &&
             clickElURL.origin === location.origin &&
@@ -224,10 +227,10 @@ const trackWebClick = () => {
           console.warn(error);
         }
       } else {
-        track('$click', getClickPayload(clickEl, ev.path));
+        track('$click', getClickPayload(clickEl, composedPath.slice(clickElIndex)));
       }
     } else {
-      track('$click', getClickPayload(trackedEL, ev.path));
+      track('$click', getClickPayload(trackedEL, composedPath));
     }
   }, true);
 };
@@ -239,7 +242,7 @@ const initDistinctId = () => {
     distinct_id = getRandomValue();
     localStore.set('distinct_id', distinct_id);
   }
-  state.preset.set('distinct_id', distinct_id);
+  state.preset.distinct_id = distinct_id;
 };
 
 // 初始化方法
@@ -270,9 +273,13 @@ const init = (options) => {
 };
 
 export default {
-  // 只包含全局预制属性
-  get statePreset() {
-    return state.preset;
+  // 添加全局预置属性
+  appendPresetState(name, value) {
+    state.preset[name] = value;
+  },
+  // 设置 唯一ID
+  setDistinctId: (id) => {
+    state.preset.distinct_id = id;
   },
   init,
   track,
