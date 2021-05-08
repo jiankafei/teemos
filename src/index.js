@@ -7,8 +7,6 @@ import pkg from '../package.json';
 
 // 默认设置
 const defaultOptions = {
-  // sdk_url: '',
-  // project: '', // 标识项目
   dsn: '', // 数据源服务地址
   use_client_time: true,
   send_type: 'beacon', // 发送方式, beacon image
