@@ -2,6 +2,7 @@ import {
   parseUserAgent,
   localStore,
   getRandomValue,
+  getComputedStyle,
 } from './utils';
 import pkg from '../package.json';
 
@@ -14,6 +15,10 @@ const defaultOptions = {
   track_page_view: true,
   // 是否开启自动追踪点击事件
   track_click: true,
+  // 追踪的元素属性
+  track_attrs: [],
+  // 追踪的元素 className
+  track_class_name: [],
   // 单页面配置，默认开启
   track_single_page: true,
   // 单页应用的发布路径，默认为/
@@ -133,6 +138,34 @@ const trackHistoryState = () => {
 
 // 追踪点击事件
 const trackWebClick = () => {
+  // 获取被追踪元素
+  const getTrackedEl = (composedPath) => {
+    const aEls = [];
+    const attrEls = [];
+    const classEls = [];
+    const buttonEls = [];
+    const pointerEls = [];
+    for (let index = 0, len = composedPath.length; index < len; index++) {
+      const el = composedPath[index];
+      if (aEls.length) return { type: 'a', el: aEls[0], index, };
+      else if (attrEls.length) return { type: 'attrs', el: attrEls[0], index, };
+      else if (classEls.length) return { type: 'class', el: classEls[0], index, };
+      else if (buttonEls.length) return { type: 'button', el: buttonEls[0], index, };
+      else if (pointerEls.length) return { type: 'pointer', el: pointerEls[0], index, };
+      if (el.tagName === 'A') {
+        aEls.push(el);
+      } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
+        attrEls.push(el);
+      } else if (state.options.track_class_name.some(cls => el.classList.contains(cls))) {
+        classEls.push(el);
+      } else if (el.tagName === 'BUTTON') {
+        buttonEls.push(el);
+      } else if (getComputedStyle(el, 'cursor') === 'pointer') {
+        pointerEls.push(el);
+      }
+    }
+    return { type: 'target', el: composedPath[0], index: 0, };
+  };
   // 获取选择器
   const getSelectorFromPath = (path) => {
     const sels = [];
@@ -185,56 +218,103 @@ const trackWebClick = () => {
       $page_y: ev.pageY,
     };
     const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
-    // 追踪 a button 点击
-    const clickElIndex = composedPath.findIndex(el => el.tagName === 'A' || 'BUTTON');
-    if (clickElIndex !== -1) {
-      const clickEl = composedPath[clickElIndex];
-      const payload = getClickPayload(clickEl, composedPath.slice(clickElIndex));
-      if (
-        clickEl.tagName === 'A' &&
-        /^https?:\/\//.test(clickEl.href) &&
-        clickEl.target !== '_blank' &&
-        !clickEl.download
-      ) {
-        // 有效可刷新链接
-        try {
-          const clickElURL = new URL(clickEl.href);
-          if (
-            state.options.track_single_page &&
-            clickElURL.origin === location.origin &&
-            clickElURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
-          ) {
-            // 单页应用路由点击
-            track('$click', { ...pagePosition, ...payload });
-          } else {
-            // 不满足单页应用路由的情况下恢复原有的链接跳转
-            // 阻止默认
-            ev.preventDefault();
-            // 是否已经触发过跳转
-            let hasCalled = false;
-            // 对于 image 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
-            const jumpUrl = () => {
-              if (!hasCalled) {
-                hasCalled = true;
-                location.href = clickEl.href;
-              }
-            };
-            // 最大时间后跳转，保证用户体验
-            let timeout = setTimeout(jumpUrl, 1000);
-            track('$click', { ...pagePosition, ...payload }, () => {
-              clearTimeout(timeout);
-              jumpUrl();
-            });
-          }
-        } catch (error) {
-          console.warn(error);
+    // 获取被追踪元素
+    const { el: trackedEL, index: trackedELIndex } = getTrackedEl(composedPath);
+    // 获取被追踪元素的信息
+    const trackedELPayload = getClickPayload(trackedEL, composedPath.slice(trackedELIndex));
+    if (
+      trackedEL.tagName === 'A' &&
+      /^https?:\/\//.test(trackedEL.href) &&
+      trackedEL.target !== '_blank' &&
+      !trackedEL.download
+    ) {
+      // 在当前页面打开的a链接
+      try {
+        const trackedELURL = new URL(trackedEL.href);
+        if (
+          state.options.track_single_page &&
+          trackedELURL.origin === location.origin &&
+          trackedELURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
+        ) {
+          // 单页应用路由点击
+          track('$click', { ...pagePosition, ...trackedELPayload });
+        } else {
+          // 阻止链接跳转
+          ev.preventDefault();
+          // 是否已经触发过链接跳转
+          let hasCalled = false;
+          // 恢复原有链接跳转
+          const jumpUrl = () => {
+            if (!hasCalled) {
+              hasCalled = true;
+              location.href = trackedEL.href;
+            }
+          };
+          // 最大时间后跳转，保证用户体验
+          // 对于 image 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
+          let timeout = setTimeout(jumpUrl, 1000);
+          track('$click', { ...pagePosition, ...trackedELPayload }, () => {
+            clearTimeout(timeout);
+            jumpUrl();
+          });
         }
-      } else {
-        track('$click', { ...pagePosition, ...payload });
+      } catch (error) {
+        console.warn(error);
       }
     } else {
-      track('$click', { ...pagePosition, ...getClickPayload(target, composedPath)});
+      track('$click', { ...pagePosition, ...trackedELPayload });
     }
+
+    // 追踪 a button 点击
+    // const clickElIndex = composedPath.findIndex(el => el.tagName === 'A' || 'BUTTON');
+    // if (clickElIndex !== -1) {
+    //   const clickEl = composedPath[clickElIndex];
+    //   const payload = getClickPayload(clickEl, composedPath.slice(clickElIndex));
+    //   if (
+    //     clickEl.tagName === 'A' &&
+    //     /^https?:\/\//.test(clickEl.href) &&
+    //     clickEl.target !== '_blank' &&
+    //     !clickEl.download
+    //   ) {
+    //     // 有效可刷新链接
+    //     try {
+    //       const clickElURL = new URL(clickEl.href);
+    //       if (
+    //         state.options.track_single_page &&
+    //         clickElURL.origin === location.origin &&
+    //         clickElURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
+    //       ) {
+    //         // 单页应用路由点击
+    //         track('$click', { ...pagePosition, ...payload });
+    //       } else {
+    //         // 不满足单页应用路由的情况下恢复原有的链接跳转
+    //         // 阻止默认
+    //         ev.preventDefault();
+    //         // 是否已经触发过跳转
+    //         let hasCalled = false;
+    //         // 对于 image 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
+    //         const jumpUrl = () => {
+    //           if (!hasCalled) {
+    //             hasCalled = true;
+    //             location.href = clickEl.href;
+    //           }
+    //         };
+    //         // 最大时间后跳转，保证用户体验
+    //         let timeout = setTimeout(jumpUrl, 1000);
+    //         track('$click', { ...pagePosition, ...payload }, () => {
+    //           clearTimeout(timeout);
+    //           jumpUrl();
+    //         });
+    //       }
+    //     } catch (error) {
+    //       console.warn(error);
+    //     }
+    //   } else {
+    //     track('$click', { ...pagePosition, ...payload });
+    //   }
+    // } else {
+    //   track('$click', { ...pagePosition, ...getClickPayload(target, composedPath)});
+    // }
   }, true);
 };
 
@@ -252,10 +332,13 @@ const initDistinctId = () => {
 const init = (options) => {
   // 初始化并挂载选项
   state.options = options = Object.assign(defaultOptions, options);
-  // 格式化 single_page_public_path
+  // 格式化配置项
   if (!options.single_page_public_path.startsWith('/')) {
     options.single_page_public_path = `/${options.single_page_public_path}`;
   }
+  state.options.track_attrs = state.options.track_attrs || [];
+  state.options.track_class_name = state.options.track_class_name || [];
+
   // 初始化设备ID
   initDistinctId();
   // 设置发送方法

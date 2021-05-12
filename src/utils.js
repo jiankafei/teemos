@@ -59,3 +59,11 @@ export const getRandomValue = () => {
   window.crypto.getRandomValues(array);
   return array.join('-');
 };
+
+// 获取计算样式
+export const getComputedStyle = (el, name) => {
+  if (el.computedStyleMap) {
+    return el.computedStyleMap().get(name);
+  }
+  return window.getComputedStyle(el).getPropertyValue(name);
+};
