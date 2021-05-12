@@ -283,6 +283,7 @@ export default {
   // 设置 唯一ID
   setDistinctId: (id) => {
     state.preset.distinct_id = id;
+    localStore.set('distinct_id', id);
   },
   init,
   track,
