@@ -176,14 +176,20 @@ const trackWebClick = () => {
   };
   document.addEventListener('click', (ev) => {
     if (!ev || !ev.target) return false;
-    let trackedEL = ev.target;
-    if (trackedEL.nodeType !== 1) return;
-    if (trackedEL.tagName === 'BODY' || trackedEL.tagName === 'HTML') return;
+    let target = ev.target;
+    if (target.nodeType !== 1) return;
+    if (target.tagName === 'BODY' || target.tagName === 'HTML') return;
+    // 点击处在页面中的定位
+    const pagePosition = {
+      $pageX: ev.pageX,
+      $pageY: ev.pageY,
+    };
     const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
     // 追踪 a button 点击
     const clickElIndex = composedPath.findIndex(el => el.tagName === 'A' || 'BUTTON');
     if (clickElIndex !== -1) {
       const clickEl = composedPath[clickElIndex];
+      const payload = getClickPayload(clickEl, composedPath.slice(clickElIndex));
       if (
         clickEl.tagName === 'A' &&
         /^https?:\/\//.test(clickEl.href) &&
@@ -193,14 +199,13 @@ const trackWebClick = () => {
         // 有效可刷新链接
         try {
           const clickElURL = new URL(clickEl.href);
-          const payload = getClickPayload(clickEl, composedPath.slice(clickElIndex));
           if (
             state.options.track_single_page &&
             clickElURL.origin === location.origin &&
             clickElURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
           ) {
             // 单页应用路由点击
-            track('$click', payload);
+            track('$click', { ...pagePosition, ...payload });
           } else {
             // 不满足单页应用路由的情况下恢复原有的链接跳转
             // 阻止默认
@@ -216,7 +221,7 @@ const trackWebClick = () => {
             };
             // 最大时间后跳转，保证用户体验
             let timeout = setTimeout(jumpUrl, 1000);
-            track('$click', payload, () => {
+            track('$click', { ...pagePosition, ...payload }, () => {
               clearTimeout(timeout);
               jumpUrl();
             });
@@ -225,10 +230,10 @@ const trackWebClick = () => {
           console.warn(error);
         }
       } else {
-        track('$click', getClickPayload(clickEl, composedPath.slice(clickElIndex)));
+        track('$click', { ...pagePosition, ...payload });
       }
     } else {
-      track('$click', getClickPayload(trackedEL, composedPath));
+      track('$click', { ...pagePosition, ...getClickPayload(target, composedPath)});
     }
   }, true);
 };
