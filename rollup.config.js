@@ -2,11 +2,10 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
-// import { terser } from 'rollup-plugin-terser';
+import { terser } from 'rollup-plugin-terser';
+import replace from '@rollup/plugin-replace';
 
-const dev = !!import.meta.ROLLUP_WATCH;
-
-console.log('sourcemap', dev);
+const WATCH = process.env.ROLLUP_WATCH;
 
 export default {
   input: 'src/index.js',
@@ -15,14 +14,14 @@ export default {
       file: 'dist/index.js',
       name: 'barypoint',
       format: 'iife',
-      sourcemap: dev,
+      sourcemap: WATCH,
       strict: true,
     },
     {
       file: 'dist/index.es.js',
       name: 'barypoint',
       format: 'es',
-      sourcemap: dev,
+      sourcemap: WATCH,
       strict: true,
     },
   ],
@@ -34,7 +33,11 @@ export default {
       exclude: 'node_modules/**',
       babelHelpers: 'bundled',
     }),
-    // terser(),
+    replace({
+      preventAssignment: true,
+      ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
+    }),
+    !WATCH && terser(),
   ],
   watch: {
     chokidar: true,
