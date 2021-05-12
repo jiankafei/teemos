@@ -176,7 +176,7 @@ const trackWebClick = () => {
   };
   document.addEventListener('click', (ev) => {
     if (!ev || !ev.target) return false;
-    let target = ev.target;
+    const target = ev.target;
     if (target.nodeType !== 1) return;
     if (target.tagName === 'BODY' || target.tagName === 'HTML') return;
     // 点击处在页面中的定位
