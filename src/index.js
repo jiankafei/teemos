@@ -181,8 +181,8 @@ const trackWebClick = () => {
     if (target.tagName === 'BODY' || target.tagName === 'HTML') return;
     // 点击处在页面中的定位
     const pagePosition = {
-      $pageX: ev.pageX,
-      $pageY: ev.pageY,
+      $page_x: ev.pageX,
+      $page_y: ev.pageY,
     };
     const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
     // 追踪 a button 点击
