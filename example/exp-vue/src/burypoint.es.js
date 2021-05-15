@@ -261,6 +261,7 @@ const getTrackedEl = composedPath => {
 
   for (let index = 0, len = composedPath.length; index < len; index++) {
     const el = composedPath[index];
+    if (el.tagName === 'BODY') break;
 
     if (el.tagName === 'A') {
       aEls.push({
@@ -317,9 +318,7 @@ const getSelectorFromPath = path => {
       sels.unshift(el.tagName.toLowerCase());
     }
 
-    if (el.tagName.toLowerCase() === 'body') {
-      break;
-    }
+    if (el.tagName === 'BODY') break;
   }
 
   return sels.join('>');

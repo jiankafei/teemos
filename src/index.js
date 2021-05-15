@@ -157,6 +157,7 @@ const getTrackedEl = (composedPath) => {
   const pointerEls = [];
   for (let index = 0, len = composedPath.length; index < len; index++) {
     const el = composedPath[index];
+    if (el.tagName === 'BODY') break;
     if (el.tagName === 'A') {
       aEls.push({ type: 'a', el, index, });
     } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
@@ -188,9 +189,7 @@ const getSelectorFromPath = (path) => {
     } else {
       sels.unshift(el.tagName.toLowerCase());
     }
-    if (el.tagName.toLowerCase() === 'body') {
-      break;
-    }
+    if (el.tagName === 'BODY') break;
   }
   return sels.join('>');
 };
