@@ -276,57 +276,6 @@ const autoTrackClick = () => {
     } else {
       track('$click', { ...pagePosition, ...trackedELPayload });
     }
-
-    // 追踪 a button 点击
-    // const clickElIndex = composedPath.findIndex(el => el.tagName === 'A' || 'BUTTON');
-    // if (clickElIndex !== -1) {
-    //   const clickEl = composedPath[clickElIndex];
-    //   const payload = getClickPayload(clickEl, composedPath.slice(clickElIndex));
-    //   if (
-    //     clickEl.tagName === 'A' &&
-    //     /^https?:\/\//.test(clickEl.href) &&
-    //     clickEl.target !== '_blank' &&
-    //     !clickEl.download
-    //   ) {
-    //     // 有效可刷新链接
-    //     try {
-    //       const clickElURL = new URL(clickEl.href);
-    //       if (
-    //         state.options.auto_track_single_page &&
-    //         clickElURL.origin === location.origin &&
-    //         clickElURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
-    //       ) {
-    //         // 单页应用路由点击
-    //         track('$click', { ...pagePosition, ...payload });
-    //       } else {
-    //         // 不满足单页应用路由的情况下恢复原有的链接跳转
-    //         // 阻止默认
-    //         ev.preventDefault();
-    //         // 是否已经触发过跳转
-    //         let hasCalled = false;
-    //         // 对于 image 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
-    //         const jumpUrl = () => {
-    //           if (!hasCalled) {
-    //             hasCalled = true;
-    //             location.href = clickEl.href;
-    //           }
-    //         };
-    //         // 最大时间后跳转，保证用户体验
-    //         let timeout = setTimeout(jumpUrl, 1000);
-    //         track('$click', { ...pagePosition, ...payload }, () => {
-    //           clearTimeout(timeout);
-    //           jumpUrl();
-    //         });
-    //       }
-    //     } catch (error) {
-    //       console.warn(error);
-    //     }
-    //   } else {
-    //     track('$click', { ...pagePosition, ...payload });
-    //   }
-    // } else {
-    //   track('$click', { ...pagePosition, ...getClickPayload(target, composedPath)});
-    // }
   }, true);
 };
 
