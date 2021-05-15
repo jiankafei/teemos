@@ -1,9 +1,9 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import bp from './bp.es';
+import burypoint from './burypoint.es';
 
-bp.init({
+burypoint.init({
   dsn: 'http://www.exp.com/dsn',
   debug: true,
 });
