@@ -147,23 +147,23 @@ const trackWebClick = () => {
     const pointerEls = [];
     for (let index = 0, len = composedPath.length; index < len; index++) {
       const el = composedPath[index];
-      if (aEls.length) return { type: 'a', el: aEls[0], index, };
-      else if (attrEls.length) return { type: 'attrs', el: attrEls[0], index, };
-      else if (classEls.length) return { type: 'class', el: classEls[0], index, };
-      else if (buttonEls.length) return { type: 'button', el: buttonEls[0], index, };
-      else if (pointerEls.length) return { type: 'pointer', el: pointerEls[0], index, };
       if (el.tagName === 'A') {
-        aEls.push(el);
+        aEls.push({ type: 'a', el, index, });
       } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
-        attrEls.push(el);
+        attrEls.push({ type: 'attrs', el, index, });
       } else if (state.options.track_class_name.some(cls => el.classList.contains(cls))) {
-        classEls.push(el);
+        classEls.push({ type: 'class', el, index, });
       } else if (el.tagName === 'BUTTON') {
-        buttonEls.push(el);
+        buttonEls.push({ type: 'button', el, index, });
       } else if (getComputedStyle(el, 'cursor') === 'pointer') {
-        pointerEls.push(el);
+        pointerEls.push({ type: 'pointer', el, index, });
       }
     }
+    if (aEls.length) return aEls[0];
+    else if (attrEls.length) return attrEls[0];
+    else if (classEls.length) return classEls[0];
+    else if (buttonEls.length) return buttonEls[0];
+    else if (pointerEls.length) return pointerEls[0];
     return { type: 'target', el: composedPath[0], index: 0, };
   };
   // 获取选择器
