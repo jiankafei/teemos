@@ -106,19 +106,18 @@ var pkg = {
 };
 
 const defaultOptions = {
-  dsn: '',
   // 数据源服务地址
+  dsn: '',
+  // 是否使用客户端时间
   use_client_time: true,
-  send_type: 'beacon',
   // 发送方式, beacon image
-  // 是否开启自动追踪页面浏览事件
-  track_page_view: true,
-  // 是否开启自动追踪点击事件
+  send_type: 'beacon',
+  // 是否开启自动收集点击事件
   auto_track_click: true,
-  // 追踪的元素属性
-  track_attrs: [],
-  // 追踪的元素 className
-  track_class_name: [],
+  // 收集包含有元素 attribute 的点击
+  track_attrs_click: [],
+  // 收集包含有元素 className 的点击
+  track_class_name_click: [],
   // 是否开启收集所有点击事件
   track_all_click: false,
   // 单页面配置，默认开启
@@ -200,45 +199,33 @@ const track = ($event_type, payload, callback) => {
 }; // 来源页面地址
 
 
-let referrer = document.referrer; // 自动追踪spa应用页面浏览
+let referrer = document.referrer; // 自动收集spa应用页面浏览
 
 const autoTrackSinglePage = () => {
   const historyPushState = window.history.pushState;
   const historyReplaceState = window.history.replaceState;
 
   window.history.pushState = (...rest) => {
-    historyPushState.apply(window.history, rest); // 设置是否自动追踪页面浏览事件
-
-    if (state.options.track_page_view) {
-      track('$pageview', {
-        $referrer: referrer
-      });
-    }
-
+    historyPushState.apply(window.history, rest);
+    track('$pageview', {
+      $referrer: referrer
+    });
     referrer = location.href;
   };
 
   window.history.replaceState = (...rest) => {
-    historyReplaceState.apply(window.history, rest); // 设置是否自动追踪页面浏览事件
-
-    if (state.options.track_page_view) {
-      track('$pageview', {
-        $referrer: referrer
-      });
-    }
-
+    historyReplaceState.apply(window.history, rest);
+    track('$pageview', {
+      $referrer: referrer
+    });
     referrer = location.href;
   };
 
   window.addEventListener('popstate', () => {
-    // console.log(ev, ev.state);
-    // 设置是否自动追踪页面浏览事件
-    if (state.options.track_page_view) {
-      track('$pageview', {
-        $referrer: referrer
-      });
-    }
-
+    // console.log(ev.state);
+    track('$pageview', {
+      $referrer: referrer
+    });
     referrer = location.href;
   });
 }; // 手动触发spa应用 pageview 事件
@@ -251,7 +238,7 @@ const trackSinglePage = payload => {
     ...payload
   });
   referrer = location.href;
-}; // 获取被追踪元素
+}; // 获取被收集元素
 
 
 const getTrackedEl = composedPath => {
@@ -263,7 +250,7 @@ const getTrackedEl = composedPath => {
   for (let index = 0, len = composedPath.length; index < len; index++) {
     const el = composedPath[index];
     const tagName = el.tagName.toLowerCase();
-    if (tagName === 'body') break;
+    if (tagName === 'body' || tagName === 'html') break;
 
     if (tagName === 'a' || tagName === 'input' || tagName === 'textarea' || tagName === 'button') {
       els.push({
@@ -271,13 +258,13 @@ const getTrackedEl = composedPath => {
         el,
         index
       });
-    } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
+    } else if (state.options.track_attrs_click.some(attr => el.hasAttribute(attr))) {
       attrEls.push({
         type: 'attrs',
         el,
         index
       });
-    } else if (state.options.track_class_name.some(cls => el.classList.contains(cls))) {
+    } else if (state.options.track_class_name_click.some(cls => el.classList.contains(cls))) {
       classEls.push({
         type: 'class',
         el,
@@ -315,7 +302,7 @@ const getSelectorFromPath = path => {
       sels.unshift(el.tagName.toLowerCase());
     }
 
-    if (el.tagName === 'BODY') break;
+    if (el.tagName === 'BODY' || el.tagName === 'HTML') break;
   }
 
   return sels.join('>');
@@ -349,7 +336,7 @@ const getClickPayload = (el, path) => {
 
   payload.$element_selector = getSelectorFromPath(path);
   return payload;
-}; // 自动追踪点击事件
+}; // 自动收集点击事件
 
 
 const autoTrackClick = () => {
@@ -363,14 +350,14 @@ const autoTrackClick = () => {
       $page_x: ev.pageX,
       $page_y: ev.pageY
     };
-    const composedPath = ev.composedPath ? ev.composedPath() : ev.path; // 获取被追踪元素
+    const composedPath = ev.composedPath ? ev.composedPath() : ev.path; // 获取被收集元素
 
     const trackedElInfo = getTrackedEl(composedPath);
     if (!trackedElInfo) return;
     const {
       el: trackedEL,
       index: trackedELIndex
-    } = trackedElInfo; // 获取被追踪元素的信息
+    } = trackedElInfo; // 获取被收集元素的信息
 
     const trackedELPayload = getClickPayload(trackedEL, composedPath.slice(trackedELIndex));
 
@@ -437,6 +424,10 @@ const trackClick = (ev, payload) => {
 
 
 const initDistinctId = () => {
+  if (state.options.distinct_id) {
+    localStore.set('distinct_id', state.options.distinct_id);
+  }
+
   let distinct_id = localStore.get('distinct_id');
 
   if (!distinct_id) {
@@ -456,20 +447,20 @@ const init = options => {
     options.single_page_public_path = `/${options.single_page_public_path}`;
   }
 
-  state.options.track_attrs = state.options.track_attrs || [];
-  state.options.track_class_name = state.options.track_class_name || []; // 初始化设备ID
+  state.options.track_attrs_click = state.options.track_attrs_click || [];
+  state.options.track_class_name_click = state.options.track_class_name_click || []; // 初始化设备ID
 
   initDistinctId(); // 设置发送方法
 
-  sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage; // 初次加载触发pv事件
+  sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage; // 初次加载触发pageview事件
 
   track('$pageview', {
     $referrer: referrer
-  }); // 设置追踪单页应用
+  }); // 设置收集单页应用浏览事件
 
   if (options.auto_track_single_page) {
     autoTrackSinglePage();
-  } // 设置追踪点击事件
+  } // 设置收集元素点击事件
 
 
   if (options.auto_track_click) {

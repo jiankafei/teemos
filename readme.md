@@ -15,14 +15,12 @@ init(options)
   use_client_time: true,
   // 发送方式, beacon image
   send_type: 'beacon',
-  // 是否开启自动追踪页面浏览事件
-  track_page_view: true,
-  // 是否开启自动追踪点击事件
+  // 是否开启自动收集点击事件
   auto_track_click: true,
-  // 追踪的元素属性
-  track_attrs: [],
-  // 追踪的元素 className
-  track_class_name: [],
+  // 收集包含有元素 attribute 的点击
+  track_attrs_click: [],
+  // 收集包含有元素 className 的点击
+  track_class_name_click: [],
   // 是否开启收集所有点击事件
   track_all_click: false,
   // 单页面配置，默认开启
