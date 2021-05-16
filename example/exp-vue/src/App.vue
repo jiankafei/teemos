@@ -1,9 +1,16 @@
 <template>
   <div id="app">
-    <div id="nav" @click="handleNavClick">
+    <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link>
-      <button @click.stop="handleCapture">测试阻止冒泡</button>
+    </div>
+    <div style="display: flex; justify-content: center;gap: 20px">
+      <div class="el-button">测试className</div>
+      <div data-bp-click>测试attrs</div>
+      <div style="cursor: pointer">测试cursor: pointer</div>
+      <div @click="handleNavClick">
+        <button @click.stop="handleCapture">测试阻止冒泡</button>
+      </div>
       <a href="https://fanyi.baidu.com/">百度翻译</a>
     </div>
     <router-view/>

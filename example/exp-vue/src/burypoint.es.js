@@ -64,7 +64,7 @@ const getRandomValue = () => {
 
 const getComputedStyle = (el, name) => {
   if (el.computedStyleMap) {
-    return el.computedStyleMap().get(name);
+    return el.computedStyleMap().get(name).value;
   }
 
   return window.getComputedStyle(el).getPropertyValue(name);
@@ -119,6 +119,8 @@ const defaultOptions = {
   track_attrs: [],
   // 追踪的元素 className
   track_class_name: [],
+  // 是否开启收集所有点击事件
+  track_all_click: false,
   // 单页面配置，默认开启
   auto_track_single_page: true,
   // 单页应用的发布路径，默认为/
@@ -253,41 +255,38 @@ const trackSinglePage = payload => {
 
 
 const getTrackedEl = composedPath => {
-  const aEls = [];
+  const els = [];
   const attrEls = [];
   const classEls = [];
-  const buttonEls = [];
   const pointerEls = [];
 
   for (let index = 0, len = composedPath.length; index < len; index++) {
     const el = composedPath[index];
-    if (el.tagName === 'BODY') break;
+    const tagName = el.tagName.toLowerCase();
+    if (tagName === 'body') break;
 
-    if (el.tagName === 'A') {
-      aEls.push({
-        type: 'a',
+    if (tagName === 'a' || tagName === 'input' || tagName === 'textarea' || tagName === 'button') {
+      els.push({
+        type: tagName,
         el,
         index
       });
     } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
+      console.log('attrs');
       attrEls.push({
         type: 'attrs',
         el,
         index
       });
     } else if (state.options.track_class_name.some(cls => el.classList.contains(cls))) {
+      console.log('class_name');
       classEls.push({
         type: 'class',
         el,
         index
       });
-    } else if (el.tagName === 'BUTTON') {
-      buttonEls.push({
-        type: 'button',
-        el,
-        index
-      });
     } else if (getComputedStyle(el, 'cursor') === 'pointer') {
+      console.log('cursor');
       pointerEls.push({
         type: 'pointer',
         el,
@@ -296,12 +295,13 @@ const getTrackedEl = composedPath => {
     }
   }
 
-  if (aEls.length) return aEls[0];else if (attrEls.length) return attrEls[0];else if (classEls.length) return classEls[0];else if (buttonEls.length) return buttonEls[0];else if (pointerEls.length) return pointerEls[0];
-  return {
-    type: 'target',
-    el: composedPath[0],
-    index: 0
-  };
+  if (els.length) return els[0];else if (attrEls.length) return attrEls[0];else if (classEls.length) return classEls[0];else if (pointerEls.length) return pointerEls[0];else if (state.options.track_all_click) {
+    return {
+      type: 'target',
+      el: composedPath[0],
+      index: 0
+    };
+  }
 }; // 获取选择器
 
 
@@ -368,10 +368,12 @@ const autoTrackClick = () => {
     };
     const composedPath = ev.composedPath ? ev.composedPath() : ev.path; // 获取被追踪元素
 
+    const trackedElInfo = getTrackedEl(composedPath);
+    if (!trackedElInfo) return;
     const {
       el: trackedEL,
       index: trackedELIndex
-    } = getTrackedEl(composedPath); // 获取被追踪元素的信息
+    } = trackedElInfo; // 获取被追踪元素的信息
 
     const trackedELPayload = getClickPayload(trackedEL, composedPath.slice(trackedELIndex));
 
@@ -415,57 +417,7 @@ const autoTrackClick = () => {
       track('$click', { ...pagePosition,
         ...trackedELPayload
       });
-    } // 追踪 a button 点击
-    // const clickElIndex = composedPath.findIndex(el => el.tagName === 'A' || 'BUTTON');
-    // if (clickElIndex !== -1) {
-    //   const clickEl = composedPath[clickElIndex];
-    //   const payload = getClickPayload(clickEl, composedPath.slice(clickElIndex));
-    //   if (
-    //     clickEl.tagName === 'A' &&
-    //     /^https?:\/\//.test(clickEl.href) &&
-    //     clickEl.target !== '_blank' &&
-    //     !clickEl.download
-    //   ) {
-    //     // 有效可刷新链接
-    //     try {
-    //       const clickElURL = new URL(clickEl.href);
-    //       if (
-    //         state.options.auto_track_single_page &&
-    //         clickElURL.origin === location.origin &&
-    //         clickElURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
-    //       ) {
-    //         // 单页应用路由点击
-    //         track('$click', { ...pagePosition, ...payload });
-    //       } else {
-    //         // 不满足单页应用路由的情况下恢复原有的链接跳转
-    //         // 阻止默认
-    //         ev.preventDefault();
-    //         // 是否已经触发过跳转
-    //         let hasCalled = false;
-    //         // 对于 image 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
-    //         const jumpUrl = () => {
-    //           if (!hasCalled) {
-    //             hasCalled = true;
-    //             location.href = clickEl.href;
-    //           }
-    //         };
-    //         // 最大时间后跳转，保证用户体验
-    //         let timeout = setTimeout(jumpUrl, 1000);
-    //         track('$click', { ...pagePosition, ...payload }, () => {
-    //           clearTimeout(timeout);
-    //           jumpUrl();
-    //         });
-    //       }
-    //     } catch (error) {
-    //       console.warn(error);
-    //     }
-    //   } else {
-    //     track('$click', { ...pagePosition, ...payload });
-    //   }
-    // } else {
-    //   track('$click', { ...pagePosition, ...getClickPayload(target, composedPath)});
-    // }
-
+    }
   }, true);
 }; // 手动触发 click 点击事件
 // ev 点击事件的事件对象

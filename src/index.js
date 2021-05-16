@@ -19,6 +19,8 @@ const defaultOptions = {
   track_attrs: [],
   // 追踪的元素 className
   track_class_name: [],
+  // 是否开启收集所有点击事件
+  track_all_click: false,
   // 单页面配置，默认开启
   auto_track_single_page: true,
   // 单页应用的发布路径，默认为/
@@ -150,32 +152,34 @@ const trackSinglePage = (payload) => {
 
 // 获取被追踪元素
 const getTrackedEl = (composedPath) => {
-  const aEls = [];
+  const els = [];
   const attrEls = [];
   const classEls = [];
-  const buttonEls = [];
   const pointerEls = [];
   for (let index = 0, len = composedPath.length; index < len; index++) {
     const el = composedPath[index];
-    if (el.tagName === 'BODY') break;
-    if (el.tagName === 'A') {
-      aEls.push({ type: 'a', el, index, });
+    const tagName = el.tagName.toLowerCase();
+    if (tagName === 'body') break;
+    if (tagName === 'a' || tagName === 'input' || tagName === 'textarea' || tagName === 'button') {
+      els.push({ type: tagName, el, index, });
     } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
+      console.log('attrs');
       attrEls.push({ type: 'attrs', el, index, });
     } else if (state.options.track_class_name.some(cls => el.classList.contains(cls))) {
+      console.log('class_name');
       classEls.push({ type: 'class', el, index, });
-    } else if (el.tagName === 'BUTTON') {
-      buttonEls.push({ type: 'button', el, index, });
     } else if (getComputedStyle(el, 'cursor') === 'pointer') {
+      console.log('cursor');
       pointerEls.push({ type: 'pointer', el, index, });
     }
   }
-  if (aEls.length) return aEls[0];
+  if (els.length) return els[0];
   else if (attrEls.length) return attrEls[0];
   else if (classEls.length) return classEls[0];
-  else if (buttonEls.length) return buttonEls[0];
   else if (pointerEls.length) return pointerEls[0];
-  return { type: 'target', el: composedPath[0], index: 0, };
+  else if (state.options.track_all_click) {
+    return { type: 'target', el: composedPath[0], index: 0, };
+  }
 };
 // 获取选择器
 const getSelectorFromPath = (path) => {
@@ -231,7 +235,9 @@ const autoTrackClick = () => {
     };
     const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
     // 获取被追踪元素
-    const { el: trackedEL, index: trackedELIndex } = getTrackedEl(composedPath);
+    const trackedElInfo = getTrackedEl(composedPath);
+    if (!trackedElInfo) return;
+    const { el: trackedEL, index: trackedELIndex } = trackedElInfo;
     // 获取被追踪元素的信息
     const trackedELPayload = getClickPayload(trackedEL, composedPath.slice(trackedELIndex));
     if (

@@ -63,7 +63,7 @@ export const getRandomValue = () => {
 // 获取计算样式
 export const getComputedStyle = (el, name) => {
   if (el.computedStyleMap) {
-    return el.computedStyleMap().get(name);
+    return el.computedStyleMap().get(name).value;
   }
   return window.getComputedStyle(el).getPropertyValue(name);
 };

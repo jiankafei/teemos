@@ -5,6 +5,8 @@ import burypoint from './burypoint.es';
 
 burypoint.init({
   dsn: 'http://www.exp.com/dsn',
+  track_attrs: ['data-bp-click'],
+  track_class_name: ['el-button'],
   debug: true,
 });
 
