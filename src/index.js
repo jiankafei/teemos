@@ -302,6 +302,9 @@ const trackClick = (ev, payload) => {
 
 // 初始化设备ID
 const initDistinctId = () => {
+  if (state.options.distinct_id) {
+    localStore.set('distinct_id', state.options.distinct_id);
+  }
   let distinct_id = localStore.get('distinct_id');
   if (!distinct_id) {
     distinct_id = getRandomValue();
