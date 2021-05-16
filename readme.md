@@ -76,3 +76,14 @@ setDistinctId(id)
 ```js
 // 设置唯一ID
 ```
+
+## 自动收集 $click 点击事件介绍
+
+默认 $click 点击事件会收集以下元素的点击事件
+
+1. a, button, input, textarea
+2. 包含特定属性的元素
+3. 包含特定类名的元素
+4. cursor 属性值为 pointer 的元素
+
+如果需要开启收集除了 html body 外的所有元素的点击事件，请设置 track_all_click: true.

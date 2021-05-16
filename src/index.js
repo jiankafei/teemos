@@ -159,7 +159,7 @@ const getTrackedEl = (composedPath) => {
   for (let index = 0, len = composedPath.length; index < len; index++) {
     const el = composedPath[index];
     const tagName = el.tagName.toLowerCase();
-    if (tagName === 'body') break;
+    if (tagName === 'body' || tagName === 'html') break;
     if (tagName === 'a' || tagName === 'input' || tagName === 'textarea' || tagName === 'button') {
       els.push({ type: tagName, el, index, });
     } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
@@ -190,7 +190,7 @@ const getSelectorFromPath = (path) => {
     } else {
       sels.unshift(el.tagName.toLowerCase());
     }
-    if (el.tagName === 'BODY') break;
+    if (el.tagName === 'BODY' || el.tagName === 'HTML') break;
   }
   return sels.join('>');
 };
