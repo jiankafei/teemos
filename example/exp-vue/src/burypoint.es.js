@@ -272,21 +272,18 @@ const getTrackedEl = composedPath => {
         index
       });
     } else if (state.options.track_attrs.some(attr => el.hasAttribute(attr))) {
-      console.log('attrs');
       attrEls.push({
         type: 'attrs',
         el,
         index
       });
     } else if (state.options.track_class_name.some(cls => el.classList.contains(cls))) {
-      console.log('class_name');
       classEls.push({
         type: 'class',
         el,
         index
       });
     } else if (getComputedStyle(el, 'cursor') === 'pointer') {
-      console.log('cursor');
       pointerEls.push({
         type: 'pointer',
         el,
