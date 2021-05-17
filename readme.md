@@ -23,7 +23,7 @@ init(options)
   track_class_name_click: [],
   // 是否开启收集所有点击事件
   track_all_click: false,
-  // 单页面配置，默认开启
+  // 是否开启自动收集spa应用页面浏览事件，默认开启
   auto_track_single_page: true,
   // 单页应用的发布路径，默认为/
   single_page_public_path: '/',
