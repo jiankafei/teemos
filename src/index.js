@@ -203,8 +203,13 @@ const getClickPayload = (el, path) => {
   if (el.href) {
     payload.$element_target_url = el.href;
   }
-  if (el.textContent.trim()) {
-    payload.$element_content = el.textContent.replace(/\s+/g, ' ').trim().substring(0, 255);
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+    payload.$element_content = el.value;
+  } else {
+    const textContent = el.textContent.replace(/\s+/g, ' ').trim();
+    if (textContent) {
+      payload.$element_content = textContent.substring(0, 255);
+    }
   }
   payload.$element_selector = getSelectorFromPath(path);
   return payload;
