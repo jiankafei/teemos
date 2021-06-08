@@ -11,8 +11,6 @@ init(options)
 {
   // 数据源服务地址，必填
   dsn: '',
-  // 是否使用客户端时间
-  use_client_time: true,
   // 发送方式, beacon image
   send_type: 'beacon',
   // 是否开启自动收集点击事件
@@ -30,7 +28,7 @@ init(options)
   // 开启调试
   debug: false,
   // 唯一ID
-  distinct_id: '',
+  visitor_id: '',
 };
 ```
 
@@ -69,7 +67,7 @@ appendPresetState(name, value)
 // value 预置属性值
 ```
 
-setDistinctId(id)
+setVisitorId(id)
 
 ```js
 // 设置唯一ID

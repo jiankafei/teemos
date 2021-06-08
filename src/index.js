@@ -10,8 +10,6 @@ import pkg from '../package.json';
 const defaultOptions = {
   // 数据源服务地址
   dsn: '',
-  // 是否使用客户端时间
-  use_client_time: true,
   // 发送方式, beacon image
   send_type: 'beacon',
   // 是否开启自动收集点击事件
@@ -85,10 +83,6 @@ const track = ($event_type, payload, callback) => {
     ...state.preset,
     ...payload,
   };
-  // 使用本地发送时间
-  if (state.options.use_client_time) {
-    message.$timestamp = Date.now();
-  }
   // 页面相关预置属性
   message.$title = document.title;
   message.$url = location.href;
@@ -299,16 +293,16 @@ const trackClick = (ev, payload) => {
 };
 
 // 初始化设备ID
-const initDistinctId = () => {
-  if (state.options.distinct_id) {
-    localStore.set('distinct_id', state.options.distinct_id);
+const initVisitorId = () => {
+  if (state.options.visitor_id) {
+    localStore.set('visitor_id', state.options.visitor_id);
   }
-  let distinct_id = localStore.get('distinct_id');
-  if (!distinct_id) {
-    distinct_id = getRandomValue();
-    localStore.set('distinct_id', distinct_id);
+  let visitor_id = localStore.get('visitor_id');
+  if (!visitor_id) {
+    visitor_id = getRandomValue();
+    localStore.set('visitor_id', visitor_id);
   }
-  state.preset.distinct_id = distinct_id;
+  state.preset.visitor_id = visitor_id;
 };
 
 // 初始化方法
@@ -323,7 +317,7 @@ const init = (options) => {
   state.options.track_class_name_click = state.options.track_class_name_click || [];
 
   // 初始化设备ID
-  initDistinctId();
+  initVisitorId();
 
   // 设置发送方法
   sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage;
@@ -354,8 +348,8 @@ export default {
     state.preset[name] = value;
   },
   // 设置 唯一ID
-  setDistinctId: (id) => {
-    state.preset.distinct_id = id;
-    localStore.set('distinct_id', id);
+  setVisitorId: (id) => {
+    state.preset.visitor_id = id;
+    localStore.set('visitor_id', id);
   },
 };
