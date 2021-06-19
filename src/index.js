@@ -1,10 +1,16 @@
 import {
-  parseUserAgent,
   localStore,
   getRandomValue,
   getComputedStyle,
 } from './utils';
 import pkg from '../package.json';
+import * as Bowser from 'bowser';
+
+const {
+  browser,
+  os,
+  engine,
+} = Bowser.parse(window.navigator.userAgent);
 
 // 默认设置
 const defaultOptions = {
@@ -31,19 +37,26 @@ const defaultOptions = {
 // 状态信息
 const state = Object.create(null);
 
-// 挂载用户代理数据
-state.userAgentData = parseUserAgent();
-
 // 挂载全局预置属性
 state.preset = {
-  $sdk_version: pkg.version,
-  $sdk_type: 'web',
-  $user_agent: navigator.userAgent,
-  $browser_brand: state.userAgentData.brand,
-  $browser_version: state.userAgentData.version,
-  $language: navigator.language,
-  $platform: navigator.platform,
+  $st: 'web',
+  $sv: pkg.version,
+  $lg: navigator.language,
+  $pf: navigator.platform,
+  $os: os.name,
+  $ov: os.versionName,
+  $br: browser.name,
+  $bv: browser.version,
+  $eg: engine.name,
+  $ev: engine.version,
 };
+
+// 页面预置属性
+const getPagePresetProps = () => ({
+  $tt: document.title,
+  $url: location.href,
+  $path: location.pathname,
+});
 
 // 通过图片发送信息
 // 协议必须一致
@@ -74,25 +87,22 @@ const sendBeacon = (params, callback) => {
 let sendMethod;
 
 // 触发事件的方法
-// $event_type 事件，名称
+// event_name 事件，名称
 // payload 载荷信息，必须为Object对象
 // callback 回掉函数
-const track = ($event_type, payload, callback) => {
-  const message = {
-    $event_type,
+const track = (ename, payload, callback) => {
+  const info = {
+    ename,
     ...state.preset,
+    ...getPagePresetProps(),
     ...payload,
   };
-  // 页面相关预置属性
-  message.$title = document.title;
-  message.$url = location.href;
-  message.$url_path = location.pathname;
   // debug
   if (state.options.debug) {
-    console.log(message);
+    console.log(info);
   }
   // 发送
-  sendMethod(message, callback);
+  sendMethod(info, callback);
 };
 
 // 来源页面地址
@@ -106,21 +116,21 @@ const autoTrackSinglePage = () => {
   window.history.pushState = (...rest) => {
     historyPushState.apply(window.history, rest);
     track('$pageview', {
-      $referrer: referrer,
+      $ref: referrer,
     });
     referrer = location.href;
   };
   window.history.replaceState = (...rest) => {
     historyReplaceState.apply(window.history, rest);
     track('$pageview', {
-      $referrer: referrer,
+      $ref: referrer,
     });
     referrer = location.href;
   };
   window.addEventListener('popstate', () => {
     // console.log(ev.state);
     track('$pageview', {
-      $referrer: referrer,
+      $ref: referrer,
     });
     referrer = location.href;
   });
@@ -130,7 +140,7 @@ const autoTrackSinglePage = () => {
 // payload 载荷信息，必须为 Object 对象
 const trackSinglePage = (payload) => {
   track('$pageview', {
-    $referrer: referrer,
+    $ref: referrer,
     ...payload,
   });
   referrer = location.href;
@@ -183,30 +193,31 @@ const getSelectorFromPath = (path) => {
 // 获取有效点击元素的信息
 const getClickPayload = (el, path) => {
   const payload = {
-    $element_tag_name: el.tagName.toLowerCase(),
+    $el_tag: el.tagName.toLowerCase(),
   };
   if (el.id) {
-    payload.$element_id = el.id;
+    payload.$el_id = el.id;
   }
   if (el.name) {
-    payload.$element_name = el.name;
+    payload.$el_name = el.name;
   }
   if (el.className) {
-    payload.$element_class_name = el.className;
+    payload.$el_cls = el.className;
   }
   if (el.href) {
-    payload.$element_target_url = el.href;
+    payload.$el_href = el.href;
   }
-  let content = '';
   if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-    content = el.value.trim();
+    if (el.value) {
+      payload.$el_ct = el.value;
+    }
   } else {
-    content = el.textContent.replace(/\s+/g, ' ').trim();
+    const textContent = el.textContent.replace(/\s+/g, ' ').trim();
+    if (textContent) {
+      payload.$el_ct = textContent.substring(0, 255);
+    }
   }
-  if (content) {
-    payload.$element_content = content.substring(0, 255);
-  }
-  payload.$element_selector = getSelectorFromPath(path);
+  payload.$el_sel = getSelectorFromPath(path);
   return payload;
 };
 
@@ -294,15 +305,15 @@ const trackClick = (ev, payload) => {
 
 // 初始化设备ID
 const initVisitorId = () => {
-  if (state.options.visitor_id) {
-    localStore.set('visitor_id', state.options.visitor_id);
+  if (state.options.vid) {
+    localStore.set('vid', state.options.vid);
   }
-  let visitor_id = localStore.get('visitor_id');
-  if (!visitor_id) {
-    visitor_id = getRandomValue();
-    localStore.set('visitor_id', visitor_id);
+  let vid = localStore.get('vid');
+  if (!vid) {
+    vid = getRandomValue();
+    localStore.set('vid', vid);
   }
-  state.preset.visitor_id = visitor_id;
+  state.preset.vid = vid;
 };
 
 // 初始化方法
@@ -324,7 +335,7 @@ const init = (options) => {
 
   // 初次加载触发pageview事件
   track('$pageview', {
-    $referrer: referrer,
+    $ref: referrer,
   });
 
   // 设置收集单页应用浏览事件
@@ -349,7 +360,7 @@ export default {
   },
   // 设置 唯一ID
   setVisitorId: (id) => {
-    state.preset.visitor_id = id;
-    localStore.set('visitor_id', id);
+    state.preset.vid = id;
+    localStore.set('vid', id);
   },
 };
