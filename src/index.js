@@ -148,30 +148,38 @@ const trackSinglePage = (payload) => {
 
 // 获取被收集元素
 const getTrackedEl = (composedPath) => {
-  const els = [];
-  const attrEls = [];
-  const classEls = [];
-  const pointerEls = [];
+  let editEl = null;
+  let elEl = null;
+  let attrEl = null;
+  let classEl = null;
+  let pointerEl = null;
+  let btnEl = null;
   for (let index = 0, len = composedPath.length; index < len; index++) {
     const el = composedPath[index];
     const tagName = el.tagName.toLowerCase();
     if (tagName === 'body' || tagName === 'html') break;
-    if (tagName === 'a' || tagName === 'input' || tagName === 'textarea' || tagName === 'button') {
-      els.push({ type: tagName, el, index, });
-    } else if (state.options.track_attrs_click.some(attr => el.hasAttribute(attr))) {
-      attrEls.push({ type: 'attrs', el, index, });
-    } else if (state.options.track_class_name_click.some(cls => el.classList.contains(cls))) {
-      classEls.push({ type: 'class', el, index, });
-    } else if (getComputedStyle(el, 'cursor') === 'pointer') {
-      pointerEls.push({ type: 'pointer', el, index, });
+    if (el.hasAttribute('contenteditable') && el.getAttribute('contenteditable') !== 'false') {
+      !editEl && (editEl = { type: 'editable', el, index });
+    } else if (!editEl && (tagName === 'a' || tagName === 'input' || tagName === 'textarea')) {
+      !elEl && (elEl = { type: tagName, el, index });
+    } else if (!elEl && state.options.track_attrs_click.some(attr => el.hasAttribute(attr))) {
+      !attrEl && (attrEl = { type: 'attr', el, index });
+    } else if (!attrEl && state.options.track_class_name_click.some(cls => el.classList.contains(cls))) {
+      !classEl && (classEl = { type: 'class', el, index });
+    } else if (!classEl && getComputedStyle(el, 'cursor') === 'pointer') {
+      !pointerEl && (pointerEl = { type: 'pointer', el, index });
+    } else if (!pointerEl && tagName === 'button') {
+      !btnEl && (btnEl = { type: 'button', el, index });
     }
   }
-  if (els.length) return els[0];
-  else if (attrEls.length) return attrEls[0];
-  else if (classEls.length) return classEls[0];
-  else if (pointerEls.length) return pointerEls[0];
-  else if (state.options.track_all_click) {
-    return { type: 'target', el: composedPath[0], index: 0, };
+  if (editEl) return editEl;
+  if (elEl) return elEl;
+  if (attrEl) return attrEl;
+  if (classEl) return classEl;
+  if (pointerEl) return pointerEl;
+  if (btnEl) return btnEl;
+  if (state.options.track_all_click) {
+    return { type: 'target', el: composedPath[0], index: 0 };
   }
 };
 // 获取选择器
@@ -235,7 +243,7 @@ const autoTrackClick = () => {
     };
     const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
     // 获取被收集元素
-    const trackedElInfo = getTrackedEl(composedPath);
+    const trackedElInfo = getTrackedEl(composedPath.slice(0, 10));
     if (!trackedElInfo) return;
     const { el: trackedEL, index: trackedELIndex } = trackedElInfo;
     // 获取被收集元素的信息
@@ -255,6 +263,7 @@ const autoTrackClick = () => {
           trackedELURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
         ) {
           // 单页应用路由点击
+          // 单页应用中，默认所有的非blank相对链接都为单页应用路由路径
           track('$click', { ...pagePosition, ...trackedELPayload });
         } else {
           // 阻止链接跳转
