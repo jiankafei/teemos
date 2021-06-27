@@ -1,5 +1,5 @@
 // 覆写 XMLHttpRequest
-class XHR extends XMLHttpRequest {
+window.XMLHttpRequest = class XMLHttpRequest extends window.XMLHttpRequest {
   constructor(...rest) {
     super(rest);
     this.addEventListener('loadstart', () => {});
@@ -10,8 +10,6 @@ class XHR extends XMLHttpRequest {
     this.addEventListener('timeout', () => {});
   }
 }
-
-window.XMLHttpRequest = XHR;
 
 // 覆写 fetch
 window.fetch = async (...rest) => {
