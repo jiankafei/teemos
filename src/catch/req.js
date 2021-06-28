@@ -1,6 +1,6 @@
 // 覆写 XMLHttpRequest
 
-// one
+// 方案1
 window.XMLHttpRequest = class XMLHttpRequest extends window.XMLHttpRequest {
   constructor(...rest) {
     super(rest);
@@ -8,30 +8,30 @@ window.XMLHttpRequest = class XMLHttpRequest extends window.XMLHttpRequest {
     this.addEventListener('loadend', () => {});
     this.addEventListener('load', () => {});
     this.addEventListener('abort', () => {});
-    this.addEventListener('error', () => {});
+    this.addEventListener('error', (ev) => {
+      console.log(ev);
+    });
     this.addEventListener('timeout', () => {});
   }
 }
 
-// two ???
+// 方案2
 const OriginXMLHttpRequest = window.XMLHttpRequest;
-window.XMLHttpRequest = class XMLHttpRequest {
-  constructor(...rest) {
-    const xhr = Reflect.construct(OriginXMLHttpRequest, rest);
-    xhr.addEventListener('loadstart', () => {});
-    xhr.addEventListener('loadend', () => {});
-    xhr.addEventListener('load', () => {});
-    xhr.addEventListener('abort', () => {});
-    xhr.addEventListener('error', (ev) => {
-      console.log(ev);
-    });
-    xhr.addEventListener('timeout', () => {});
-    return xhr;
-  }
+
+window.XMLHttpRequest = function XMLHttpRequest(...rest) {
+  OriginXMLHttpRequest.apply(this, rest);
+  this.addEventListener('loadstart', () => {});
+  this.addEventListener('loadend', () => {});
+  this.addEventListener('load', () => {});
+  this.addEventListener('abort', () => {});
+  this.addEventListener('error', (ev) => {
+    console.log(ev);
+  });
+  this.addEventListener('timeout', () => {});
 };
 
-OriginXMLHttpRequest.prototype.construct = XMLHttpRequest;
-Reflect.setPrototypeOf(XMLHttpRequest, OriginXMLHttpRequest.prototype);
+Reflect.setPrototypeOf(XMLHttpRequest, Object.create(OriginXMLHttpRequest.prototype));
+XMLHttpRequest.prototype.construct = XMLHttpRequest;
 
 // 覆写 fetch
 window.fetch = async (...rest) => {
