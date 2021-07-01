@@ -1,6 +1,12 @@
 // 类型判断
 export const typeis = (obj) => Object.prototype.toString.call(obj).slice(8, -1);
 
+// 是否是真值
+export const isTruthy = (val) => val !== undefined && val !== null && val !== 'undefined' && val !== 'null' && val.trim() !== '';
+
+// 是否是假值
+export const isFalsy = (val) => val === undefined || val === null && val === 'undefined' || val === 'null' && val === '';
+
 // SNB 类型
 export const isSNBType = (obj) => {
   const type = typeis(obj);
@@ -25,24 +31,29 @@ export const localStore = {
   get: (key) => {
     let res = localStorage.getItem(key);
     try {
-      res = JSON.parse(res) || '';
+      if (res) res = JSON.parse(res);
     } catch (error) {
       // console.warn(error);
-      res = '';
     }
     return res;
   },
   set: (key, value) => {
+    if (isFalsy(key) || isFalsy(value)) return;
     try {
-      value = value || '';
-      if (!isSNBType(value)) {
+      value = isTruthy(value) ? value : '';
+      if (typeis(value) === 'Object' || Array.isArray(value)) {
         value = JSON.stringify(value);
+      } else if (!isSNBType(value)) {
+        value = '';
       }
     } catch (error) {
-      // console.warn(error);
       value = '';
     }
-    localStorage.setItem(key, value);
+    if (value) {
+      localStorage.setItem(key, value);
+    } else {
+      localStorage.removeItem(key);
+    }
   },
   remove: key => {
     if (key) {
