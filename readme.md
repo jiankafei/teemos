@@ -45,7 +45,7 @@ $el_id      # 元素属性 id
 $el_name    # 元素属性 name
 $el_cls     # 元素属性 class
 $el_href    # 元素属性 href
-$el_ct      # 元素内容
+$el_ct      # 元素内容，最多85个字符
 $el_sel     # 元素选择器
 $page_x     # 点击的页面x轴坐标
 $page_y     # 点击的页面y轴坐标

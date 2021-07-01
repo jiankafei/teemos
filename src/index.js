@@ -220,14 +220,15 @@ const getClickPayload = (el, path) => {
   if (el.href) {
     payload.$el_href = el.href;
   }
+  const maxContent = 85;
   if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
     if (el.value) {
-      payload.$el_ct = el.value;
+      payload.$el_ct = el.value.substring(0, maxContent);
     }
   } else {
     const textContent = el.textContent.replace(/\s+/g, ' ').trim();
     if (textContent) {
-      payload.$el_ct = textContent.substring(0, 255);
+      payload.$el_ct = textContent.substring(0, maxContent);
     }
   }
   payload.$el_sel = getSelectorFromPath(path);
