@@ -71,17 +71,17 @@ $ref # 来源页面
   // 发送方式: beacon, image
   send_type: 'beacon',
   // 是否开启自动收集点击事件，默认开启
-  auto_track_click: true,
+  click_auto_trace: true,
   // 收集包含有元素 attribute 的点击
-  track_attrs_click: [],
+  click_attrs_trace: [],
   // 收集包含有元素 className 的点击
-  track_class_name_click: [],
+  click_classes_trace: [],
   // 是否开启收集所有点击事件，默认不开启
-  track_all_click: false,
+  click_target_trace: false,
   // 是否自动收集spa应用页面浏览事件，默认开启
-  auto_track_single_page: true,
+  spa_auto_trace: true,
   // 单页应用的发布路径，默认为 /
-  single_page_public_path: '/',
+  spa_public_path: '/',
   // 是否开启调试
   debug: false,
   // 唯一ID，一般用于调试或者绑定用户ID
@@ -89,7 +89,7 @@ $ref # 来源页面
 };
 ```
 
-### track(eventName, payload, callback)
+### trace(eventName, payload, callback)
 
 ```js
 // 发送自定义事件
@@ -99,7 +99,7 @@ $ref # 来源页面
 // callback 事件的回调函数
 ```
 
-### trackClick(event, payload)
+### traceClick(event, payload)
 
 ```js
 // 手动触发$click事件
@@ -108,7 +108,7 @@ $ref # 来源页面
 // payload 额外的信息负载
 ```
 
-### trackSinglePage(payload)
+### traceSPA(payload)
 
 ```js
 // 手动触发spa应用$pageview事件
@@ -141,12 +141,12 @@ $ref # 来源页面
 4. 包含特定 class 的元素
 5. cursor 属性值为 pointer 的元素
 6. button 元素
-7. track_all_click: true 的事件的 target 元素
+7. click_target_trace: true 时点击事件的 target 元素
 
 注意：
 
 1. 不收集 body html 元素的点击事件
-2. 除了以上说明外的其他元素的所有点击事件的收集，请设置 track_all_click: true.
+2. click_target_trace: true 表示每次点击都会有兜底的 target 元素，作为点击信息上报元素。
 
 ## example
 
