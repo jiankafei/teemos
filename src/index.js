@@ -23,13 +23,13 @@ const defaultOptions = {
   // 收集包含有元素 attribute 的点击
   track_attrs_click: [],
   // 收集包含有元素 className 的点击
-  track_class_name_click: [],
+  track_classes_click: [],
   // 是否开启收集所有点击事件
   track_all_click: false,
   // 单页面配置，默认开启
-  auto_track_single_page: true,
+  auto_track_spa: true,
   // 单页应用的发布路径，默认为/
-  single_page_public_path: '/',
+  spa_public_path: '/',
   // 开启调试
   debug: false,
 };
@@ -159,16 +159,21 @@ const getTrackedEl = (composedPath) => {
     const tagName = el.tagName.toLowerCase();
     if (tagName === 'body' || tagName === 'html') break;
     if (el.hasAttribute('contenteditable') && el.getAttribute('contenteditable') !== 'false') {
-      !editEl && (editEl = { type: 'editable', el, index });
-    } else if (!editEl && (tagName === 'a' || tagName === 'input' || tagName === 'textarea')) {
-      !elEl && (elEl = { type: tagName, el, index });
-    } else if (!elEl && state.options.track_attrs_click.some(attr => el.hasAttribute(attr))) {
-      !attrEl && (attrEl = { type: 'attr', el, index });
-    } else if (!attrEl && state.options.track_class_name_click.some(cls => el.classList.contains(cls))) {
-      !classEl && (classEl = { type: 'class', el, index });
-    } else if (!classEl && getComputedStyle(el, 'cursor') === 'pointer') {
-      !pointerEl && (pointerEl = { type: 'pointer', el, index });
-    } else if (!pointerEl && tagName === 'button') {
+      if (editEl) break;
+      editEl = { type: 'editable', el, index };
+    } else if (tagName === 'a' || tagName === 'input' || tagName === 'textarea') {
+      if (elEl) continue;
+      elEl = { type: tagName, el, index };
+    } else if (state.options.track_attrs_click.some(attr => el.hasAttribute(attr))) {
+      if (attrEl) continue;
+      attrEl = { type: 'attr', el, index };
+    } else if (state.options.track_classes_click.some(cls => el.classList.contains(cls))) {
+      if (classEl) continue;
+      classEl = { type: 'class', el, index };
+    } else if (getComputedStyle(el, 'cursor') === 'pointer') {
+      if (pointerEl) continue;
+      pointerEl = { type: 'pointer', el, index };
+    } else if (tagName === 'button') {
       !btnEl && (btnEl = { type: 'button', el, index });
     }
   }
@@ -258,9 +263,9 @@ const autoTrackClick = () => {
       try {
         const trackedELURL = new URL(trackedEL.href);
         if (
-          state.options.auto_track_single_page &&
+          state.options.auto_track_spa &&
           trackedELURL.origin === location.origin &&
-          trackedELURL.href.startsWith(`${location.origin}${state.options.single_page_public_path}`)
+          trackedELURL.href.startsWith(`${location.origin}${state.options.spa_public_path}`)
         ) {
           // 单页应用路由点击
           // 单页应用中，默认所有的非blank相对链接都为单页应用路由路径
@@ -330,11 +335,11 @@ const init = (options) => {
   // 初始化并挂载选项
   state.options = options = Object.assign(defaultOptions, options);
   // 格式化配置项
-  if (!options.single_page_public_path.startsWith('/')) {
-    options.single_page_public_path = `/${options.single_page_public_path}`;
+  if (!options.spa_public_path.startsWith('/')) {
+    options.spa_public_path = `/${options.spa_public_path}`;
   }
   state.options.track_attrs_click = state.options.track_attrs_click || [];
-  state.options.track_class_name_click = state.options.track_class_name_click || [];
+  state.options.track_classes_click = state.options.track_classes_click || [];
 
   // 初始化设备ID
   initVisitorId();
@@ -348,7 +353,7 @@ const init = (options) => {
   });
 
   // 设置收集单页应用浏览事件
-  if (options.auto_track_single_page) {
+  if (options.auto_track_spa) {
     autoTrackSinglePage();
   }
 
