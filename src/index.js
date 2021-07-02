@@ -87,12 +87,12 @@ const sendBeacon = (params, callback) => {
 let sendMethod;
 
 // 触发事件的方法
-// event_name 事件，名称
+// event_type 事件类型
 // payload 载荷信息，必须为Object对象
 // callback 回掉函数
-const trace = (ename, payload, callback) => {
+const trace = (et, payload, callback) => {
   const info = {
-    ename,
+    et,
     ...state.preset,
     ...getPagePresetProps(),
     ...payload,
