@@ -1,15 +1,23 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
+    <div id="nav" @click.capture="handleNavCapture">
+      <div @click="handleNav">
+        <router-link to="/">Home</router-link> |
+        <router-link to="/about">About</router-link> |
+        <a href="/about">Link About</a>
+      </div>
     </div>
     <div style="display: flex; justify-content: center;gap: 20px">
       <div class="el-button">测试className</div>
       <div data-bp-click>测试attrs</div>
       <div style="cursor: pointer">测试cursor: pointer</div>
-      <div @click="handleNavClick">
-        <button @click.stop="handleCapture">测试阻止冒泡</button>
+      <div @click.capture="handleCapture">
+        <div @click="handleBubble">
+          <button @click.prevent="handlePrevent">测试阻止默认</button>
+          <button @click.stop="handleStopBubble">测试阻止冒泡</button>
+          <button @click.stop.prevent="handleStopPrevent">测试阻止冒泡和默认</button>
+          <button @click="handleHasBubble">测试正常冒泡</button>
+        </div>
       </div>
       <a href="https://fanyi.baidu.com/">百度翻译</a>
     </div>
@@ -20,11 +28,61 @@
 <script>
 export default {
   methods: {
-    handleNavClick() {
-      console.log('captured test');
+    handleNavCapture(ev) {
+      console.log('Capture Nav', ev.defaultPrevented);
+      window.queueMacrotask(() => {
+        console.log('Capture Macro Nav', ev.defaultPrevented);
+      });
+      setTimeout(() => {
+        console.log(111);
+      }, 10000);
     },
-    handleCapture() {
-      console.log('test');
+    handleNav(ev) {
+      console.log('Nav', ev.defaultPrevented);
+      window.queueMacrotask(() => {
+        console.log('Macro Nav', ev.defaultPrevented);
+      });
+      setTimeout(() => {
+        console.log('setTimeout Nav', 111);
+      }, 10000);
+    },
+    handleCapture(ev) {
+      console.log('Capture Delegate');
+      console.log('Normal');
+      console.log('prevent', ev.defaultPrevented);
+      queueMicrotask(() => {
+        console.log('Capture Microtask');
+        console.log('prevent', ev.defaultPrevented);
+      });
+      setTimeout(() => {
+        console.log('Capture Timeout');
+        console.log('prevent', ev.defaultPrevented);
+      });
+    },
+    handleBubble(ev) {
+      console.log('Bubble Delegate');
+      console.log('Normal');
+      console.log('prevent', ev.defaultPrevented);
+      queueMicrotask(() => {
+        console.log('Bubble Microtask');
+        console.log('prevent', ev.defaultPrevented);
+      });
+      setTimeout(() => {
+        console.log('Bubble Timeout');
+        console.log('prevent', ev.defaultPrevented);
+      });
+    },
+    handleStopBubble() {
+      console.log('Stop Bubble');
+    },
+    handleHasBubble() {
+      console.log('Has Bubble');
+    },
+    handleStopPrevent() {
+      console.log('Stop Bubble & Prevent Default');
+    },
+    handlePrevent() {
+      console.log('Prevent Default');
     },
   },
 }

@@ -78,3 +78,34 @@ export const getComputedStyle = (el, name) => {
   }
   return window.getComputedStyle(el).getPropertyValue(name);
 };
+
+// 检测和标准化 url
+export const checkURL = (url) => {
+  if (!url) return null;
+  try {
+    const URL = window.URL || window.webkitURL;
+    if (/^\/\//.test(url)) {
+      return new URL(`${window.location.protocol}${url}`);
+    }
+    if (/^\//.test(url)) {
+      return new URL(`${window.location.origin}${url}`);
+    }
+    if (!/^https?:\/\//.test(url)) {
+      return new URL(`${window.location.protocol}//${url}`);
+    }
+    return new URL(url);
+  } catch (error) {
+    console.warn(error);
+    return null;
+  }
+};
+
+// 有效链接
+export const validLink = (el) => {
+  return (
+    el.tagName === 'A'
+    && /^https?:\/\//.test(el.href)
+    && el.target !== '_blank'
+    && !el.download
+  );
+};

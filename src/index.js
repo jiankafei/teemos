@@ -2,9 +2,11 @@ import {
   localStore,
   getRandomValue,
   getComputedStyle,
+  validLink,
 } from './utils';
 import pkg from '../package.json';
 import * as Bowser from 'bowser';
+import './polyfill';
 
 const {
   browser,
@@ -28,8 +30,6 @@ const defaultOptions = {
   click_target_trace: false,
   // 单页面配置，默认开启
   spa_auto_trace: true,
-  // 单页应用的发布路径，默认为/
-  spa_public_path: '/',
   // 开启调试
   debug: false,
 };
@@ -192,6 +192,7 @@ const getTracedEl = (composedPath) => {
     return { type: 'target', el: composedPath[0], index: 0 };
   }
 };
+
 // 获取选择器
 const getSelectorFromPath = (path) => {
   const sels = [];
@@ -208,6 +209,7 @@ const getSelectorFromPath = (path) => {
   }
   return sels.join('>');
 };
+
 // 获取有效点击元素的信息
 const getClickPayload = (el, path) => {
   const payload = {
@@ -240,41 +242,43 @@ const getClickPayload = (el, path) => {
   return payload;
 };
 
+// 点击事件前置共性操作
+const handleClickPreset = (ev) => {
+  if (!ev || !ev.target) return;
+  const target = ev.target;
+  if (target.nodeType !== 1) return;
+  if (target.tagName === 'BODY' || target.tagName === 'HTML') return;
+  // 点击处在页面中的定位
+  const pagePosition = {
+    $page_x: ev.pageX,
+    $page_y: ev.pageY,
+  };
+  const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
+  // 获取被收集元素
+  const tracedElInfo = getTracedEl(composedPath.slice(0, 10));
+  if (!tracedElInfo) return;
+  const { el: tracedEL, index: tracedELPathIndex, type: tracedType } = tracedElInfo;
+  // 获取被收集元素的信息
+  const tracedELPayload = getClickPayload(tracedEL, composedPath.slice(tracedELPathIndex));
+  return {
+    tracedEL,
+    tracedELPathIndex,
+    tracedType,
+    pagePosition,
+    tracedELPayload,
+  };
+};
+
 // 自动收集点击事件
 const autoTraceClick = () => {
+  // 冒泡阶段用于 a 有效链接点击收集
   document.addEventListener('click', (ev) => {
-    if (!ev || !ev.target) return false;
-    const target = ev.target;
-    if (target.nodeType !== 1) return;
-    if (target.tagName === 'BODY' || target.tagName === 'HTML') return;
-    // 点击处在页面中的定位
-    const pagePosition = {
-      $page_x: ev.pageX,
-      $page_y: ev.pageY,
-    };
-    const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
-    // 获取被收集元素
-    const tracedElInfo = getTracedEl(composedPath.slice(0, 10));
-    if (!tracedElInfo) return;
-    const { el: tracedEL, index: tracedELIndex } = tracedElInfo;
-    // 获取被收集元素的信息
-    const tracedELPayload = getClickPayload(tracedEL, composedPath.slice(tracedELIndex));
-    if (
-      tracedEL.tagName === 'A' &&
-      /^https?:\/\//.test(tracedEL.href) &&
-      tracedEL.target !== '_blank' &&
-      !tracedEL.download
-    ) {
-      // 在当前页面打开的a链接
-      try {
-        const tracedELURL = new URL(tracedEL.href);
-        if (
-          state.options.spa_auto_trace &&
-          tracedELURL.origin === location.origin &&
-          tracedELURL.href.startsWith(`${location.origin}${state.options.spa_public_path}`)
-        ) {
-          // 单页应用路由点击
-          // 单页应用中，默认所有的非blank相对链接都为单页应用路由路径
+    const res = handleClickPreset(ev);
+    if (res) {
+      const { tracedEL, pagePosition, tracedELPayload } = res;
+      if (validLink(tracedEL)) {
+        if (ev.defaultPrevented) {
+          // 对于项目已经阻止的默认行为，不做任何多余操作，维持原有行为
           trace('$click', { ...pagePosition, ...tracedELPayload });
         } else {
           // 阻止链接跳转
@@ -282,25 +286,32 @@ const autoTraceClick = () => {
           // 是否已经触发过链接跳转
           let hasCalled = false;
           // 恢复原有链接跳转
-          const jumpUrl = () => {
+          const jumpTo = () => {
             if (!hasCalled) {
               hasCalled = true;
               location.href = tracedEL.href;
             }
           };
           // 最大时间后跳转，保证用户体验
-          // 对于 image 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
-          let timeout = setTimeout(jumpUrl, 1000);
+          // 非 Beacon 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
+          const timeout = setTimeout(jumpTo, 1000);
           trace('$click', { ...pagePosition, ...tracedELPayload }, () => {
             clearTimeout(timeout);
-            jumpUrl();
+            jumpTo();
           });
         }
-      } catch (error) {
-        console.warn(error);
       }
-    } else {
-      trace('$click', { ...pagePosition, ...tracedELPayload });
+    }
+  }, true);
+  // 捕获阶段用于其他点击收集
+  document.addEventListener('click', (ev) => {
+    const res = handleClickPreset(ev);
+    if (res) {
+      const { tracedEL, pagePosition, tracedELPayload } = res;
+      // 非 Beacon 发送方式，对于项目自行绑定的脚本跳转(location.href = '')，无能为力
+      if (!validLink(tracedEL)) {
+        trace('$click', { ...pagePosition, ...tracedELPayload });
+      }
     }
   }, true);
 };
@@ -341,9 +352,6 @@ const init = (options) => {
   // 初始化并挂载选项
   state.options = options = Object.assign(defaultOptions, options);
   // 格式化配置项
-  if (!options.spa_public_path.startsWith('/')) {
-    options.spa_public_path = `/${options.spa_public_path}`;
-  }
   state.options.click_attrs_trace = state.options.click_attrs_trace || [];
   state.options.click_classes_trace = state.options.click_classes_trace || [];
 
