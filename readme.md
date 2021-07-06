@@ -135,13 +135,12 @@ $ref # 来源页面
 只收集从事件 target 向父级查找最多10层元素；
 默认 $click 点击事件遵循以下规则，优先级依次递减。
 
-1. contenteditable 元素
-2. a, input, textarea 元素
-3. 包含特定 attr 的元素
-4. 包含特定 class 的元素
-5. cursor 属性值为 pointer 的元素
-6. button 元素
-7. click_target_trace: true 时点击事件的 target 元素
+1. contenteditable, input, textarea 元素
+2. a 元素
+3. 包含特定 attr, class 的元素
+4. cursor 属性值为 pointer 的元素
+5. button 元素
+6. click_target_trace: true 时点击事件的 target 元素
 
 注意：
 
