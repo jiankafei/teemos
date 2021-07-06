@@ -1,3 +1,4 @@
+import './polyfill';
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
@@ -5,8 +6,8 @@ import burypoint from './burypoint.es';
 
 burypoint.init({
   dsn: 'http://www.exp.com/dsn',
-  track_attrs: ['data-bp-click'],
-  track_class_name: ['el-button'],
+  click_attrs_trace: ['data-bp-click'],
+  click_classes_trace: ['el-button'],
   debug: true,
 });
 

@@ -33,7 +33,7 @@ $bv       # 浏览器版本
 $eg       # 浏览器引擎
 $ev       # 浏览器引擎版本
 $tt       # 页面 title
-$url      # 页面 href
+$url      # 页面 url
 $path     # 页面 path
 ```
 
@@ -80,8 +80,6 @@ $ref # 来源页面
   click_target_trace: false,
   // 是否自动收集spa应用页面浏览事件，默认开启
   spa_auto_trace: true,
-  // 单页应用的发布路径，默认为 /
-  spa_public_path: '/',
   // 是否开启调试
   debug: false,
   // 唯一ID，一般用于调试或者绑定用户ID
