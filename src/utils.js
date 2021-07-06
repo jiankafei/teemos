@@ -95,7 +95,7 @@ export const checkURL = (url) => {
     }
     return new URL(url);
   } catch (error) {
-    console.warn(error);
+    // console.warn(error);
     return null;
   }
 };

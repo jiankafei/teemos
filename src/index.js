@@ -5,7 +5,7 @@ import {
   validLink,
 } from './utils';
 import pkg from '../package.json';
-import * as Bowser from 'bowser';
+import Bowser from 'bowser';
 import './polyfill';
 
 const {
