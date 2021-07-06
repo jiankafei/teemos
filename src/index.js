@@ -302,7 +302,7 @@ const autoTraceClick = () => {
         }
       }
     }
-  }, true);
+  }, false);
   // 捕获阶段用于其他点击收集
   document.addEventListener('click', (ev) => {
     const res = handleClickPreset(ev);
