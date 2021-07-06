@@ -109,7 +109,7 @@ const trace = (et, payload, callback) => {
 let referrer = document.referrer;
 
 // 自动收集spa应用页面浏览
-const autoTrackSPA = () => {
+const autoTraceSPA = () => {
   const historyPushState = window.history.pushState;
   const historyReplaceState = window.history.replaceState;
 
@@ -147,11 +147,14 @@ const traceSPA = (payload) => {
 };
 
 // 获取被收集元素
-const getTrackedEl = (composedPath) => {
+const getTracedEl = (composedPath) => {
+  const {
+    click_attrs_trace,
+    click_classes_trace,
+  } = state.options;
   let editEl = null;
   let elEl = null;
   let attrEl = null;
-  let classEl = null;
   let pointerEl = null;
   let btnEl = null;
   for (let index = 0, len = composedPath.length; index < len; index++) {
@@ -161,15 +164,18 @@ const getTrackedEl = (composedPath) => {
     if (el.hasAttribute('contenteditable') && el.getAttribute('contenteditable') !== 'false') {
       if (editEl) break;
       editEl = { type: 'editable', el, index };
-    } else if (tagName === 'a' || tagName === 'input' || tagName === 'textarea') {
+    } else if (tagName === 'input' || tagName === 'textarea') {
+      if (editEl) break;
+      editEl = { type: tagName, el, index };
+    } else if (tagName === 'a') {
       if (elEl) continue;
       elEl = { type: tagName, el, index };
-    } else if (state.options.click_attrs_trace.some(attr => el.hasAttribute(attr))) {
+    } else if (click_attrs_trace.some(attr => el.hasAttribute(attr))) {
       if (attrEl) continue;
       attrEl = { type: 'attr', el, index };
-    } else if (state.options.click_classes_trace.some(cls => el.classList.contains(cls))) {
-      if (classEl) continue;
-      classEl = { type: 'class', el, index };
+    } else if (click_classes_trace.some(cls => el.classList.contains(cls))) {
+      if (attrEl) continue;
+      attrEl = { type: 'class', el, index };
     } else if (getComputedStyle(el, 'cursor') === 'pointer') {
       if (pointerEl) continue;
       pointerEl = { type: 'pointer', el, index };
@@ -180,7 +186,6 @@ const getTrackedEl = (composedPath) => {
   if (editEl) return editEl;
   if (elEl) return elEl;
   if (attrEl) return attrEl;
-  if (classEl) return classEl;
   if (pointerEl) return pointerEl;
   if (btnEl) return btnEl;
   if (state.options.click_target_trace) {
@@ -236,7 +241,7 @@ const getClickPayload = (el, path) => {
 };
 
 // 自动收集点击事件
-const autoTrackClick = () => {
+const autoTraceClick = () => {
   document.addEventListener('click', (ev) => {
     if (!ev || !ev.target) return false;
     const target = ev.target;
@@ -249,7 +254,7 @@ const autoTrackClick = () => {
     };
     const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
     // 获取被收集元素
-    const tracedElInfo = getTrackedEl(composedPath.slice(0, 10));
+    const tracedElInfo = getTracedEl(composedPath.slice(0, 10));
     if (!tracedElInfo) return;
     const { el: tracedEL, index: tracedELIndex } = tracedElInfo;
     // 获取被收集元素的信息
@@ -355,12 +360,12 @@ const init = (options) => {
 
   // 设置收集单页应用浏览事件
   if (options.spa_auto_trace) {
-    autoTrackSPA();
+    autoTraceSPA();
   }
 
   // 设置收集元素点击事件
   if (options.click_auto_trace) {
-    autoTrackClick();
+    autoTraceClick();
   }
 };
 
