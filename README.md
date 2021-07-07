@@ -106,7 +106,7 @@ $ref # 来源页面
 // payload 额外的信息负载
 ```
 
-### traceSPA(payload)
+### tracePageview(payload)
 
 ```js
 // 手动触发spa应用$pageview事件
