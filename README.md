@@ -13,8 +13,8 @@
 ### 全局非埋点属性
 
 ```txt
-et    # EventType 事件类型
-vid   # VisitorId 访问者id
+$ev    # Event 事件
+$vid   # VisitorId 访问者id
 ```
 
 以 $ 开头的属性都为原有预置属性，为了便于区分，请在添加额外预置属性时，属性名不要以 $ 开头。
@@ -68,21 +68,21 @@ $ref # 来源页面
 {
   // 数据源服务地址，必填
   dsn: '',
-  // 发送方式: beacon, image
+  // 发送方式: beacon, image，默认beacon
   send_type: 'beacon',
-  // 是否开启自动收集点击事件，默认开启
+  // 是否自动收集页面浏览事件，默认开启
+  pageview_auto_trace: true,
+  // 是否自动收集点击事件，默认开启
   click_auto_trace: true,
-  // 收集包含有元素 attribute 的点击
-  click_attrs_trace: [],
-  // 收集包含有元素 className 的点击
-  click_classes_trace: [],
-  // 是否开启收集所有点击事件，默认不开启
+  // 收集包含有特定属性的元素的点击
+  click_attr_trace: [],
+  // 收集包含有特定类名的元素的点击
+  click_class_trace: [],
+  // 是否开启收集兜底事件触发元素的点击，默认不开启
   click_target_trace: false,
-  // 是否自动收集spa应用页面浏览事件，默认开启
-  spa_auto_trace: true,
   // 是否开启调试
   debug: false,
-  // 唯一ID，一般用于调试或者绑定用户ID
+  // 访问者ID，一般用于调试或者绑定用户ID
   vid: '',
 };
 ```
@@ -106,7 +106,7 @@ $ref # 来源页面
 // payload 额外的信息负载
 ```
 
-### traceSPA(payload)
+### tracePageview(payload)
 
 ```js
 // 手动触发spa应用$pageview事件
@@ -114,7 +114,7 @@ $ref # 来源页面
 // payload 额外的信息负载
 ```
 
-### appendPresetState(name, value)
+### addPresetState(name, value)
 
 ```js
 // 添加额外的全局预置属性
@@ -125,7 +125,7 @@ $ref # 来源页面
 ### setVisitorId(id)
 
 ```js
-// 设置唯一ID，一般用于调试或者绑定用户ID
+// 设置访问者ID，一般用于调试或者绑定用户ID
 ```
 
 ## 自动收集 $click 点击事件介绍

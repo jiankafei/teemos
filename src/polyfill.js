@@ -1,6 +1,6 @@
 // 宏任务
 window.queueMacrotask = (() => {
-  if (window.MessageChannel.prototype && window.MessageChannel.prototype.constructor === window.MessageChannel) {
+  if (window?.MessageChannel?.prototype?.constructor === window.MessageChannel) {
     const channel = new MessageChannel();
     const { port1, port2 } = channel;
     port1.start();

@@ -7,12 +7,6 @@ export const isTruthy = (val) => val !== undefined && val !== null && val !== 'u
 // 是否是假值
 export const isFalsy = (val) => val === undefined || val === null && val === 'undefined' || val === 'null' && val === '';
 
-// SNB 类型
-export const isSNBType = (obj) => {
-  const type = typeis(obj);
-  return type === 'String' || type === 'Number' || type === 'Boolean';
-};
-
 // 获取代理信息
 export const parseUserAgent = () => {
   if (navigator.userAgentData) {
@@ -27,6 +21,11 @@ export const parseUserAgent = () => {
   }
 };
 
+// 本地存储
+const isSNBType = (obj) => {
+  const type = typeis(obj);
+  return type === 'String' || type === 'Number' || type === 'Boolean';
+};
 export const localStore = {
   get: (key) => {
     let res = localStorage.getItem(key);
