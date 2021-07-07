@@ -16,20 +16,20 @@ const {
 
 // 默认设置
 const defaultOptions = {
-  // 数据源服务地址
+  // 数据源服务地址，必填
   dsn: '',
-  // 发送方式, beacon image
+  // 发送方式: beacon, image，默认beacon
   send_type: 'beacon',
-  // 是否开启自动收集点击事件
+  // 是否自动收集页面浏览事件，默认开启
+  pageview_auto_trace: true,
+  // 是否自动收集点击事件，默认开启
   click_auto_trace: true,
-  // 收集包含有元素 attribute 的点击
-  click_attrs_trace: [],
-  // 收集包含有元素 className 的点击
-  click_classes_trace: [],
-  // 是否开启收集点击事件的兜底target元素
+  // 收集包含有特定属性的元素的点击
+  click_attr_trace: [],
+  // 收集包含有特定类名的元素的点击
+  click_class_trace: [],
+  // 是否开启收集兜底事件触发元素的点击，默认不开启
   click_target_trace: false,
-  // 单页面配置，默认开启
-  spa_auto_trace: true,
   // 开启调试
   debug: false,
 };
@@ -90,9 +90,9 @@ let sendMethod;
 // event_type 事件类型
 // payload 载荷信息，必须为Object对象
 // callback 回掉函数
-const trace = (et, payload, callback) => {
+const trace = ($ev, payload, callback) => {
   const info = {
-    et,
+    $ev,
     ...state.preset,
     ...getPagePresetProps(),
     ...payload,
@@ -108,8 +108,8 @@ const trace = (et, payload, callback) => {
 // 来源页面地址
 let referrer = document.referrer;
 
-// 自动收集spa应用页面浏览
-const autoTraceSPA = () => {
+// 自动收集页面浏览
+const autoTracePageview = () => {
   const historyPushState = window.history.pushState;
   const historyReplaceState = window.history.replaceState;
 
@@ -136,9 +136,9 @@ const autoTraceSPA = () => {
   });
 };
 
-// 手动触发spa应用 pageview 事件
+// 手动触发应用 pageview 事件
 // payload 载荷信息，必须为 Object 对象
-const traceSPA = (payload) => {
+const tracePageview = (payload) => {
   trace('$pageview', {
     $ref: referrer,
     ...payload,
@@ -149,8 +149,8 @@ const traceSPA = (payload) => {
 // 获取被收集元素
 const getTracedEl = (composedPath) => {
   const {
-    click_attrs_trace,
-    click_classes_trace,
+    click_attr_trace,
+    click_class_trace,
   } = state.options;
   let editEl = null;
   let elEl = null;
@@ -170,10 +170,10 @@ const getTracedEl = (composedPath) => {
     } else if (tagName === 'a') {
       if (elEl) continue;
       elEl = { type: tagName, el, index };
-    } else if (click_attrs_trace.some(attr => el.hasAttribute(attr))) {
+    } else if (click_attr_trace.some(attr => el.hasAttribute(attr))) {
       if (attrEl) continue;
       attrEl = { type: 'attr', el, index };
-    } else if (click_classes_trace.some(cls => el.classList.contains(cls))) {
+    } else if (click_class_trace.some(cls => el.classList.contains(cls))) {
       if (attrEl) continue;
       attrEl = { type: 'class', el, index };
     } else if (getComputedStyle(el, 'cursor') === 'pointer') {
@@ -344,7 +344,7 @@ const initVisitorId = () => {
     vid = getRandomValue();
     localStore.set('vid', vid);
   }
-  state.preset.vid = vid;
+  state.preset.$vid = vid;
 };
 
 // 初始化方法
@@ -352,8 +352,8 @@ const init = (options) => {
   // 初始化并挂载选项
   state.options = options = Object.assign(defaultOptions, options);
   // 格式化配置项
-  state.options.click_attrs_trace = state.options.click_attrs_trace || [];
-  state.options.click_classes_trace = state.options.click_classes_trace || [];
+  state.options.click_attr_trace = state.options.click_attr_trace ?? [];
+  state.options.click_class_trace = state.options.click_class_trace ?? [];
 
   // 初始化设备ID
   initVisitorId();
@@ -361,14 +361,13 @@ const init = (options) => {
   // 设置发送方法
   sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage;
 
-  // 初次加载触发pageview事件
-  trace('$pageview', {
-    $ref: referrer,
-  });
-
   // 设置收集单页应用浏览事件
-  if (options.spa_auto_trace) {
-    autoTraceSPA();
+  if (options.pageview_auto_trace) {
+    // 初次加载触发pageview事件
+    trace('$pageview', {
+      $ref: referrer,
+    });
+    autoTracePageview();
   }
 
   // 设置收集元素点击事件
@@ -381,14 +380,14 @@ export default {
   init,
   trace,
   traceClick,
-  traceSPA,
+  tracePageview,
   // 添加全局预置属性
-  appendPresetState(name, value) {
+  addPresetState: (name, value) => {
     state.preset[name] = value;
   },
-  // 设置 唯一ID
+  // 设置访问者ID
   setVisitorId: (id) => {
-    state.preset.vid = id;
     localStore.set('vid', id);
+    state.preset.$vid = id;
   },
 };
