@@ -110,6 +110,11 @@ let referrer = document.referrer;
 
 // 自动收集页面浏览
 const autoTracePageview = () => {
+  // 初次加载触发pageview事件
+  trace('$pageview', {
+    $ref: referrer,
+  });
+
   const historyPushState = window.history.pushState;
   const historyReplaceState = window.history.replaceState;
 
@@ -351,6 +356,7 @@ const initVisitorId = () => {
 const init = (options) => {
   // 初始化并挂载选项
   state.options = options = Object.assign(defaultOptions, options);
+
   // 格式化配置项
   state.options.click_attr_trace = state.options.click_attr_trace ?? [];
   state.options.click_class_trace = state.options.click_class_trace ?? [];
@@ -363,10 +369,6 @@ const init = (options) => {
 
   // 设置收集单页应用浏览事件
   if (options.pageview_auto_trace) {
-    // 初次加载触发pageview事件
-    trace('$pageview', {
-      $ref: referrer,
-    });
     autoTracePageview();
   }
 
