@@ -30,18 +30,12 @@ export default {
   methods: {
     handleNavCapture(ev) {
       console.log('Capture Nav', ev.defaultPrevented);
-      window.queueMacrotask(() => {
-        console.log('Capture Macro Nav', ev.defaultPrevented);
-      });
       setTimeout(() => {
         console.log(111);
       }, 10000);
     },
     handleNav(ev) {
       console.log('Nav', ev.defaultPrevented);
-      window.queueMacrotask(() => {
-        console.log('Macro Nav', ev.defaultPrevented);
-      });
       setTimeout(() => {
         console.log('setTimeout Nav', 111);
       }, 10000);
@@ -50,10 +44,6 @@ export default {
       console.log('Capture Delegate');
       console.log('Normal');
       console.log('prevent', ev.defaultPrevented);
-      queueMicrotask(() => {
-        console.log('Capture Microtask');
-        console.log('prevent', ev.defaultPrevented);
-      });
       setTimeout(() => {
         console.log('Capture Timeout');
         console.log('prevent', ev.defaultPrevented);
@@ -63,10 +53,6 @@ export default {
       console.log('Bubble Delegate');
       console.log('Normal');
       console.log('prevent', ev.defaultPrevented);
-      queueMicrotask(() => {
-        console.log('Bubble Microtask');
-        console.log('prevent', ev.defaultPrevented);
-      });
       setTimeout(() => {
         console.log('Bubble Timeout');
         console.log('prevent', ev.defaultPrevented);
