@@ -6,7 +6,6 @@ import {
 } from './utils';
 import pkg from '../package.json';
 import Bowser from 'bowser';
-import './polyfill';
 
 const {
   browser,
