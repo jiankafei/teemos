@@ -7,8 +7,6 @@ import pkg from '../package.json';
 import Bowser from 'bowser';
 import Fingerprint from '@fingerprintjs/fingerprintjs';
 
-const fpp = Fingerprint.load()
-
 const {
   browser,
   os,
@@ -347,7 +345,7 @@ const initVisitorId = async () => {
   }
   let vid = localStore.get('vid');
   if (!vid) {
-    const fp = await fpp;
+    const fp = await Fingerprint.load();
     const res = await fp.get();
     vid = res.visitorId;
     localStore.set('vid', vid);
@@ -356,28 +354,32 @@ const initVisitorId = async () => {
 };
 
 // 初始化方法
-const init = (options) => {
-  // 初始化并挂载选项
-  state.options = options = Object.assign(defaultOptions, options);
+const init = async (options) => {
+  try {
+    // 初始化并挂载选项
+    state.options = options = Object.assign(defaultOptions, options);
 
-  // 格式化配置项
-  state.options.click_attr_trace = state.options.click_attr_trace ?? [];
-  state.options.click_class_trace = state.options.click_class_trace ?? [];
+    // 格式化配置项
+    state.options.click_attr_trace = state.options.click_attr_trace ?? [];
+    state.options.click_class_trace = state.options.click_class_trace ?? [];
 
-  // 初始化设备ID
-  initVisitorId();
+    // 初始化设备ID
+    await initVisitorId();
 
-  // 设置发送方法
-  sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage;
+    // 设置发送方法
+    sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage;
 
-  // 设置收集单页应用浏览事件
-  if (options.pageview_auto_trace) {
-    autoTracePageview();
-  }
+    // 设置收集单页应用浏览事件
+    if (options.pageview_auto_trace) {
+      autoTracePageview();
+    }
 
-  // 设置收集元素点击事件
-  if (options.click_auto_trace) {
-    autoTraceClick();
+    // 设置收集元素点击事件
+    if (options.click_auto_trace) {
+      autoTraceClick();
+    }
+  } catch (error) {
+    console.warn(`bp init(): ${error.message}`);
   }
 };
 
