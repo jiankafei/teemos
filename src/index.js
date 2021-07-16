@@ -1,11 +1,13 @@
 import {
   localStore,
-  getRandomValue,
   getComputedStyle,
   validLink,
 } from './utils';
 import pkg from '../package.json';
 import Bowser from 'bowser';
+import Fingerprint from '@fingerprintjs/fingerprintjs';
+
+const fpp = Fingerprint.load()
 
 const {
   browser,
@@ -339,13 +341,15 @@ const traceClick = (ev, payload) => {
 };
 
 // 初始化设备ID
-const initVisitorId = () => {
+const initVisitorId = async () => {
   if (state.options.vid) {
     localStore.set('vid', state.options.vid);
   }
   let vid = localStore.get('vid');
   if (!vid) {
-    vid = getRandomValue();
+    const fp = await fpp;
+    const res = await fp.get();
+    vid = res.visitorId;
     localStore.set('vid', vid);
   }
   state.preset.$vid = vid;

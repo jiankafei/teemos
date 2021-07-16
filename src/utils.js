@@ -7,7 +7,7 @@ export const isTruthy = (val) => val !== undefined && val !== null && val !== 'u
 // 是否是假值
 export const isFalsy = (val) => val === undefined || val === null && val === 'undefined' || val === 'null' && val === '';
 
-// 获取代理信息
+// 获取代理信息，暂未使用
 export const parseUserAgent = () => {
   if (navigator.userAgentData) {
     return navigator.userAgentData.brands[2];
@@ -63,7 +63,7 @@ export const localStore = {
   },
 };
 
-// 获取随机值
+// 获取随机值，暂未使用
 export const getRandomValue = () => {
   const array = new Uint32Array(3);
   window.crypto.getRandomValues(array);

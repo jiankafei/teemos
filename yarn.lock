@@ -890,6 +890,13 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
+"@fingerprintjs/fingerprintjs@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.nlark.com/@fingerprintjs/fingerprintjs/download/@fingerprintjs/fingerprintjs-3.2.0.tgz#de2f5abef524331db22b1745858e1b22bf5e86c6"
+  integrity sha1-3i9avvUkMx2yKxdFhY4bIr9ehsY=
+  dependencies:
+    tslib "^2.0.1"
+
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
   resolved "https://registry.nlark.com/@humanwhocodes/config-array/download/@humanwhocodes/config-array-0.5.0.tgz#1407967d4c6eecd7388f83acf1eaf4d0c6e58ef9"
@@ -2156,6 +2163,11 @@ to-regex-range@^5.0.1:
   integrity sha1-FkjESq58jZiKMmAY7XL1tN0DkuQ=
   dependencies:
     is-number "^7.0.0"
+
+tslib@^2.0.1:
+  version "2.3.0"
+  resolved "https://registry.nlark.com/tslib/download/tslib-2.3.0.tgz#803b8cdab3e12ba581a4ca41c8839bbb0dacb09e"
+  integrity sha1-gDuM2rPhK6WBpMpByIObuw2ssJ4=
 
 type-check@^0.4.0, type-check@~0.4.0:
   version "0.4.0"
