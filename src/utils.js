@@ -2,10 +2,10 @@
 export const typeis = (obj) => Object.prototype.toString.call(obj).slice(8, -1);
 
 // 是否是真值
-export const isTruthy = (val) => val !== undefined && val !== null && val !== 'undefined' && val !== 'null' && val.trim() !== '';
+export const isTruthy = (val) => val.trim() !== '' && val !== undefined && val !== null && val !== 'undefined' && val !== 'null';
 
 // 是否是假值
-export const isFalsy = (val) => val === undefined || val === null && val === 'undefined' || val === 'null' && val === '';
+export const isFalsy = (val) => val.trim() === '' || val === undefined || val === null || val === 'undefined' || val === 'null';
 
 // 获取代理信息，暂未使用
 export const parseUserAgent = () => {
