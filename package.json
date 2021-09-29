@@ -1,5 +1,5 @@
 {
-  "name": "barypoint",
+  "name": "burypoint",
   "version": "1.0.0",
   "main": "index.js",
   "author": "ct",
@@ -9,21 +9,21 @@
     "build": "rollup -c rollup.config.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.6",
-    "@babel/preset-env": "^7.14.7",
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.6",
     "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-commonjs": "^20.0.0",
     "@rollup/plugin-eslint": "^8.0.1",
     "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.0.0",
-    "@rollup/plugin-replace": "^2.4.2",
+    "@rollup/plugin-node-resolve": "^13.0.5",
+    "@rollup/plugin-replace": "^3.0.0",
     "chokidar": "^3.5.2",
-    "rollup": "^2.52.7",
+    "rollup": "^2.57.0",
     "rollup-plugin-terser": "^7.0.2"
   },
   "dependencies": {
-    "@fingerprintjs/fingerprintjs": "^3.2.0",
+    "@fingerprintjs/fingerprintjs": "^3.3.0",
     "bowser": "^2.11.0",
-    "core-js": "^3.15.2"
+    "core-js": "^3.18.1"
   }
 }

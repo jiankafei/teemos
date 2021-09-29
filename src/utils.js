@@ -1,11 +1,11 @@
 // 类型判断
-export const typeis = (obj) => Object.prototype.toString.call(obj).slice(8, -1);
-
-// 是否是真值
-export const isTruthy = (val) => val.trim() !== '' && val !== undefined && val !== null && val !== 'undefined' && val !== 'null';
+export const tpof = (obj) => Object.prototype.toString.call(obj).slice(8, -1);
 
 // 是否是假值
 export const isFalsy = (val) => val.trim() === '' || val === undefined || val === null || val === 'undefined' || val === 'null';
+
+// 是否是真值
+export const isTruthy = (val) => !isFalsy(val);
 
 // 获取代理信息，暂未使用
 export const parseUserAgent = () => {
@@ -23,7 +23,7 @@ export const parseUserAgent = () => {
 
 // 本地存储
 const isSNBType = (obj) => {
-  const type = typeis(obj);
+  const type = tpof(obj);
   return type === 'String' || type === 'Number' || type === 'Boolean';
 };
 export const localStore = {
@@ -40,7 +40,7 @@ export const localStore = {
     if (isFalsy(key) || isFalsy(value)) return;
     try {
       value = isTruthy(value) ? value : '';
-      if (typeis(value) === 'Object' || Array.isArray(value)) {
+      if (tpof(value) === 'Object' || Array.isArray(value)) {
         value = JSON.stringify(value);
       } else if (!isSNBType(value)) {
         value = '';

@@ -1,11 +1,11 @@
+import Bowser from 'bowser';
+import Fingerprint from '@fingerprintjs/fingerprintjs';
 import {
   localStore,
   getComputedStyle,
   validLink,
 } from './utils';
 import pkg from '../package.json';
-import Bowser from 'bowser';
-import Fingerprint from '@fingerprintjs/fingerprintjs';
 
 const {
   browser,
@@ -21,6 +21,8 @@ const defaultOptions = {
   send_type: 'beacon',
   // 是否自动收集页面浏览事件，默认开启
   pageview_auto_trace: true,
+  // 是否自动收集页面停留事件，默认开启
+  pagestay_auto_trace: true,
   // 是否自动收集点击事件，默认开启
   click_auto_trace: true,
   // 收集包含有特定属性的元素的点击
@@ -38,23 +40,29 @@ const state = Object.create(null);
 
 // 挂载全局预置属性
 state.preset = {
-  $st: 'web',
-  $sv: pkg.version,
-  $lg: navigator.language,
-  $pf: navigator.platform,
+  $sdk: 'web',
+  $sdk_v: pkg.version,
+  $lang: navigator.language,
   $os: os.name,
-  $ov: os.versionName,
+  $os_v: os.versionName,
   $br: browser.name,
-  $bv: browser.version,
-  $eg: engine.name,
-  $ev: engine.version,
+  $br_v: browser.version,
+  $eng: engine.name,
+  $eng_v: engine.version,
 };
 
 // 页面预置属性
+const screenSize = {
+  $scr_w: window.screen.width,
+  $scr_h: window.screen.height,
+};
 const getPagePresetProps = () => ({
   $tt: document.title,
   $url: location.href,
   $path: location.pathname,
+  $cts: Date.now(),
+  ...screenSize,
+  $scr_ori: window.screen.orientation.type,
 });
 
 // 通过图片发送信息
@@ -89,9 +97,9 @@ let sendMethod;
 // event_type 事件类型
 // payload 载荷信息，必须为Object对象
 // callback 回掉函数
-const trace = ($ev, payload, callback) => {
+const trace = ($event, payload, callback) => {
   const info = {
-    $ev,
+    $event,
     ...state.preset,
     ...getPagePresetProps(),
     ...payload,
@@ -107,47 +115,58 @@ const trace = ($ev, payload, callback) => {
 // 来源页面地址
 let referrer = document.referrer;
 
+// 页面开始时间
+let pageStartTime = Date.now();
+
+// 手动触发应用 pageview 事件
+// payload 载荷信息，必须为 Object 对象
+const tracePageview = (payload, callback) => {
+  trace('$pageview', {
+    $ref: referrer,
+    ...payload,
+  }, callback);
+  referrer = location.href;
+};
+
+// pagestay 页面停留时间事件
+const tracePagestay = (payload, callback) => {
+  const $du = Date.now() - pageStartTime;
+  if ($du > 5000) {
+    trace('$pagestay', {
+      $du,
+      ...payload,
+    }, callback);
+  }
+  pageStartTime = Date.now();
+};
+
+// 手动设置页面开始时间
+const setPageStartTime = (time) => {
+  pageStartTime = time;
+};
+
 // 自动收集页面浏览
 const autoTracePageview = () => {
   // 初次加载触发pageview事件
-  trace('$pageview', {
-    $ref: referrer,
-  });
+  tracePageview();
 
   const historyPushState = window.history.pushState;
   const historyReplaceState = window.history.replaceState;
 
   window.history.pushState = (...rest) => {
     historyPushState.apply(window.history, rest);
-    trace('$pageview', {
-      $ref: referrer,
-    });
-    referrer = location.href;
+    tracePageview();
+    state.options.pagestay_auto_trace && tracePagestay();
   };
   window.history.replaceState = (...rest) => {
     historyReplaceState.apply(window.history, rest);
-    trace('$pageview', {
-      $ref: referrer,
-    });
-    referrer = location.href;
+    tracePageview();
+    state.options.pagestay_auto_trace && tracePagestay();
   };
   window.addEventListener('popstate', () => {
-    // console.log(ev.state);
-    trace('$pageview', {
-      $ref: referrer,
-    });
-    referrer = location.href;
+    tracePageview();
+    state.options.pagestay_auto_trace && tracePagestay();
   });
-};
-
-// 手动触发应用 pageview 事件
-// payload 载荷信息，必须为 Object 对象
-const tracePageview = (payload) => {
-  trace('$pageview', {
-    $ref: referrer,
-    ...payload,
-  });
-  referrer = location.href;
 };
 
 // 获取被收集元素
@@ -198,9 +217,9 @@ const getTracedEl = (composedPath) => {
 };
 
 // 获取选择器
-const getSelectorFromPath = (path) => {
+const getSelectorFromPath = (composedPath) => {
   const sels = [];
-  for (const el of path) {
+  for (const el of composedPath) {
     if (el.id) {
       sels.unshift(`#${el.id}`);
       break;
@@ -215,75 +234,93 @@ const getSelectorFromPath = (path) => {
 };
 
 // 获取有效点击元素的信息
-const getClickPayload = (el, path) => {
-  const payload = {
+const getClickPayload = (el, composedPath, ev) => {
+  // 元素信息载荷
+  const elPayload = {
     $el_tag: el.tagName.toLowerCase(),
   };
   if (el.id) {
-    payload.$el_id = el.id;
+    elPayload.$el_id = el.id;
   }
   if (el.name) {
-    payload.$el_name = el.name;
+    elPayload.$el_name = el.name;
   }
   if (el.className) {
-    payload.$el_cls = el.className;
+    elPayload.$el_cls = el.className;
   }
   if (el.href) {
-    payload.$el_href = el.href;
+    elPayload.$el_href = el.href;
   }
   const maxContent = 85;
   if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
     if (el.value) {
-      payload.$el_ct = el.value.substring(0, maxContent);
+      elPayload.$el_ct = el.value.substring(0, maxContent);
     }
   } else {
     const textContent = el.textContent.replace(/\s+/g, ' ').trim();
     if (textContent) {
-      payload.$el_ct = textContent.substring(0, maxContent);
+      elPayload.$el_ct = textContent.substring(0, maxContent);
     }
   }
-  payload.$el_sel = getSelectorFromPath(path);
-  return payload;
+  elPayload.$el_sel = getSelectorFromPath(composedPath);
+  // 点击处在页面中的定位载荷
+  const posPayload = {
+    $page_x: ev.pageX,
+    $page_y: ev.pageY,
+  };
+  return {
+    elPayload,
+    posPayload,
+  };
 };
 
 // 点击事件前置共性操作
-const handleClickPreset = (ev) => {
+const getTracedELInfo = (ev) => {
   if (!ev || !ev.target) return;
   const target = ev.target;
   if (target.nodeType !== 1) return;
   if (target.tagName === 'BODY' || target.tagName === 'HTML') return;
-  // 点击处在页面中的定位
-  const pagePosition = {
-    $page_x: ev.pageX,
-    $page_y: ev.pageY,
-  };
   const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
   // 获取被收集元素
   const tracedElInfo = getTracedEl(composedPath.slice(0, 10));
   if (!tracedElInfo) return;
   const { el: tracedEL, index: tracedELPathIndex, type: tracedType } = tracedElInfo;
-  // 获取被收集元素的信息
-  const tracedELPayload = getClickPayload(tracedEL, composedPath.slice(tracedELPathIndex));
   return {
     tracedEL,
     tracedELPathIndex,
     tracedType,
-    pagePosition,
-    tracedELPayload,
   };
+};
+
+// 手动触发 click 点击事件
+// ev 点击事件的事件对象
+// payload 载荷信息，必须为 Object 对象
+const traceClick = (ev, payload, callback) => {
+  const tg = ev.currentTarget;
+  const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
+  const tracedELIndex = composedPath.findIndex((el) => el === tg);
+  const {
+    elPayload,
+    posPayload,
+  } = getClickPayload(tg, composedPath.slice(tracedELIndex), ev);
+  trace('$click', {
+    ...elPayload,
+    ...posPayload,
+    ...payload,
+  }, callback);
 };
 
 // 自动收集点击事件
 const autoTraceClick = () => {
   // 冒泡阶段用于 a 有效链接点击收集
   document.addEventListener('click', (ev) => {
-    const res = handleClickPreset(ev);
+    const res = getTracedELInfo(ev);
     if (res) {
-      const { tracedEL, pagePosition, tracedELPayload } = res;
+      const { tracedEL } = res;
       if (validLink(tracedEL)) {
         if (ev.defaultPrevented) {
           // 对于项目已经阻止的默认行为，不做任何多余操作，维持原有行为
-          trace('$click', { ...pagePosition, ...tracedELPayload });
+          traceClick(ev);
         } else {
           // 阻止链接跳转
           ev.preventDefault();
@@ -299,7 +336,7 @@ const autoTraceClick = () => {
           // 最大时间后跳转，保证用户体验
           // 非 Beacon 发送方式，如果发送数据时间大于1000ms，则可能无法成功发送数据
           const timeout = setTimeout(jumpTo, 1000);
-          trace('$click', { ...pagePosition, ...tracedELPayload }, () => {
+          traceClick(ev, null, () => {
             clearTimeout(timeout);
             jumpTo();
           });
@@ -309,43 +346,29 @@ const autoTraceClick = () => {
   }, false);
   // 捕获阶段用于其他点击收集
   document.addEventListener('click', (ev) => {
-    const res = handleClickPreset(ev);
+    const res = getTracedELInfo(ev);
     if (res) {
-      const { tracedEL, pagePosition, tracedELPayload } = res;
+      const { tracedEL } = res;
       // 非 Beacon 发送方式，对于项目自行绑定的脚本跳转(location.href = '')，无能为力
       if (!validLink(tracedEL)) {
-        trace('$click', { ...pagePosition, ...tracedELPayload });
+        traceClick(ev);
       }
     }
   }, true);
 };
 
-// 手动触发 click 点击事件
-// ev 点击事件的事件对象
-// payload 载荷信息，必须为 Object 对象
-const traceClick = (ev, payload) => {
-  const ct = ev.currentTarget;
-  const pagePosition = {
-    $page_x: ev.pageX,
-    $page_y: ev.pageY,
-  };
-  const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
-  const tracedELIndex = composedPath.findIndex((el) => el === ct);
-  trace('$click', {
-    ...pagePosition,
-    ...getClickPayload(ct, composedPath.slice(tracedELIndex)),
-    ...payload,
-  });
-};
-
-// 初始化设备ID
-const initVisitorId = async () => {
+// 初始化ID
+const fpPromise = Fingerprint.load();
+const initIds = async () => {
+  if (state.options.uid) {
+    state.preset.$uid = state.options.uid;
+  }
   if (state.options.vid) {
     localStore.set('vid', state.options.vid);
   }
   let vid = localStore.get('vid');
   if (!vid) {
-    const fp = await Fingerprint.load();
+    const fp = await fpPromise;
     const res = await fp.get();
     vid = res.visitorId;
     localStore.set('vid', vid);
@@ -363,8 +386,8 @@ const init = async (options) => {
     state.options.click_attr_trace = state.options.click_attr_trace ?? [];
     state.options.click_class_trace = state.options.click_class_trace ?? [];
 
-    // 初始化设备ID
-    await initVisitorId();
+    // 初始化ID
+    await initIds();
 
     // 设置发送方法
     sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage;
@@ -388,9 +411,15 @@ export default {
   trace,
   traceClick,
   tracePageview,
+  tracePagestay,
+  setPageStartTime,
   // 添加全局预置属性
   addPresetState: (name, value) => {
     state.preset[name] = value;
+  },
+  // 设置用户ID
+  setUserId: (value) => {
+    state.preset.$uid = value;
   },
   // 设置访问者ID
   setVisitorId: (id) => {

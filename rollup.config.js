@@ -4,6 +4,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
+import eslint from '@rollup/plugin-eslint';
 
 const WATCH = process.env.ROLLUP_WATCH;
 
@@ -26,6 +27,7 @@ export default {
     },
   ],
   plugins: [
+    eslint(),
     commonjs(),
     resolve(),
     json(),
