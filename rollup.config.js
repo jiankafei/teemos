@@ -12,15 +12,15 @@ export default {
   input: 'src/index.js',
   output: [
     {
-      file: 'dist/burypoint.js',
-      name: 'barypoint',
+      file: 'dist/bp.js',
+      name: 'burypoint',
       format: 'iife',
       sourcemap: !WATCH,
       strict: true,
     },
     {
-      file: 'dist/burypoint.es.js',
-      name: 'barypoint',
+      file: 'dist/bp.es.js',
+      name: 'burypoint',
       format: 'es',
       sourcemap: !WATCH,
       strict: true,

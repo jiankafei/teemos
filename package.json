@@ -1,7 +1,8 @@
 {
   "name": "burypoint",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/bp.js",
+  "module": "dist/bp.es.js",
   "author": "ct",
   "license": "MIT",
   "scripts": {
