@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "watch": "rollup -c rollup.config.js -w",
-    "build": "rollup -c rollup.config.js"
+    "build": "rimraf dist && rollup -c rollup.config.js"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",
@@ -19,6 +19,7 @@
     "@rollup/plugin-node-resolve": "^13.0.5",
     "@rollup/plugin-replace": "^3.0.0",
     "chokidar": "^3.5.2",
+    "rimraf": "^3.0.2",
     "rollup": "^2.57.0",
     "rollup-plugin-terser": "^7.0.2"
   },

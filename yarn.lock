@@ -2213,7 +2213,7 @@ resolve@^1.14.2, resolve@^1.17.0, resolve@^1.19.0:
 
 rimraf@^3.0.2:
   version "3.0.2"
-  resolved "https://registry.nlark.com/rimraf/download/rimraf-3.0.2.tgz?cache=0&sync_timestamp=1621222688664&other_urls=https%3A%2F%2Fregistry.nlark.com%2Frimraf%2Fdownload%2Frimraf-3.0.2.tgz#f1a5402ba6220ad52cc1282bac1ae3aa49fd061a"
+  resolved "https://registry.nlark.com/rimraf/download/rimraf-3.0.2.tgz#f1a5402ba6220ad52cc1282bac1ae3aa49fd061a"
   integrity sha1-8aVAK6YiCtUswSgrrBrjqkn9Bho=
   dependencies:
     glob "^7.1.3"
