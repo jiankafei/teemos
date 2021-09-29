@@ -17,7 +17,8 @@
 
 ```txt
 $event    # Event 事件
-$vid   # VisitorId 访问者id
+$vid      # VisitorId 访问者ID
+$uid      # UserId 用户ID
 ```
 
 ### 全局预置属性
