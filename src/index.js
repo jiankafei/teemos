@@ -60,7 +60,7 @@ const getPagePresetProps = () => ({
   $tt: document.title,
   $url: location.href,
   $path: location.pathname,
-  $cts: Date.now(),
+  $cs_ts: Date.now(),
   ...screenSize,
   $scr_ori: window.screen.orientation.type,
 });
@@ -97,9 +97,9 @@ let sendMethod;
 // event_type 事件类型
 // payload 载荷信息，必须为Object对象
 // callback 回掉函数
-const trace = ($event, payload, callback) => {
+const trace = ($evt, payload, callback) => {
   const info = {
-    $event,
+    $evt,
     ...state.preset,
     ...getPagePresetProps(),
     ...payload,
@@ -133,7 +133,7 @@ const tracePagestay = (payload, callback) => {
   const $du = Date.now() - pageStartTime;
   if ($du > 5000) {
     trace('$pagestay', {
-      $du,
+      $du: Math.round($du / 1000),
       ...payload,
     }, callback);
   }
@@ -167,6 +167,55 @@ const autoTracePageview = () => {
     tracePageview();
     state.options.pagestay_auto_trace && tracePagestay();
   });
+};
+
+// 获取选择器
+const getSelectorFromPath = (path) => {
+  const sels = [];
+  for (const el of path) {
+    if (el.id) {
+      sels.unshift(`#${el.id}`);
+      break;
+    } else if (el.className) {
+      sels.unshift(`.${el.classList[0]}`);
+    } else {
+      sels.unshift(el.tagName.toLowerCase());
+    }
+    if (el.tagName === 'BODY' || el.tagName === 'HTML') break;
+  }
+  return sels.join('>');
+};
+
+// 获取有效点击元素的信息
+const getClickPayload = (el, path) => {
+  const elPayload = {
+    $el_tag: el.tagName.toLowerCase(),
+  };
+  if (el.id) {
+    elPayload.$el_id = el.id;
+  }
+  if (el.name) {
+    elPayload.$el_name = el.name;
+  }
+  if (el.className) {
+    elPayload.$el_cls = el.className;
+  }
+  if (el.href) {
+    elPayload.$el_href = el.href;
+  }
+  const maxContent = 85;
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+    if (el.value) {
+      elPayload.$el_ct = el.value.substring(0, maxContent);
+    }
+  } else {
+    const textContent = el.textContent.replace(/\s+/g, ' ').trim();
+    if (textContent) {
+      elPayload.$el_ct = textContent.substring(0, maxContent);
+    }
+  }
+  elPayload.$el_sel = getSelectorFromPath(path);
+  return elPayload;
 };
 
 // 获取被收集元素
@@ -216,64 +265,6 @@ const getTracedEl = (composedPath) => {
   }
 };
 
-// 获取选择器
-const getSelectorFromPath = (composedPath) => {
-  const sels = [];
-  for (const el of composedPath) {
-    if (el.id) {
-      sels.unshift(`#${el.id}`);
-      break;
-    } else if (el.className) {
-      sels.unshift(`.${el.classList[0]}`);
-    } else {
-      sels.unshift(el.tagName.toLowerCase());
-    }
-    if (el.tagName === 'BODY' || el.tagName === 'HTML') break;
-  }
-  return sels.join('>');
-};
-
-// 获取有效点击元素的信息
-const getClickPayload = (el, composedPath, ev) => {
-  // 元素信息载荷
-  const elPayload = {
-    $el_tag: el.tagName.toLowerCase(),
-  };
-  if (el.id) {
-    elPayload.$el_id = el.id;
-  }
-  if (el.name) {
-    elPayload.$el_name = el.name;
-  }
-  if (el.className) {
-    elPayload.$el_cls = el.className;
-  }
-  if (el.href) {
-    elPayload.$el_href = el.href;
-  }
-  const maxContent = 85;
-  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-    if (el.value) {
-      elPayload.$el_ct = el.value.substring(0, maxContent);
-    }
-  } else {
-    const textContent = el.textContent.replace(/\s+/g, ' ').trim();
-    if (textContent) {
-      elPayload.$el_ct = textContent.substring(0, maxContent);
-    }
-  }
-  elPayload.$el_sel = getSelectorFromPath(composedPath);
-  // 点击处在页面中的定位载荷
-  const posPayload = {
-    $page_x: ev.pageX,
-    $page_y: ev.pageY,
-  };
-  return {
-    elPayload,
-    posPayload,
-  };
-};
-
 // 点击事件前置共性操作
 const getTracedELInfo = (ev) => {
   if (!ev || !ev.target) return;
@@ -299,10 +290,12 @@ const traceClick = (ev, payload, callback) => {
   const tg = ev.currentTarget;
   const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
   const tracedELIndex = composedPath.findIndex((el) => el === tg);
-  const {
-    elPayload,
-    posPayload,
-  } = getClickPayload(tg, composedPath.slice(tracedELIndex), ev);
+  // 点击处在页面中的定位载荷
+  const posPayload = {
+    $page_x: ev.pageX,
+    $page_y: ev.pageY,
+  };
+  const elPayload = getClickPayload(tg, composedPath.slice(tracedELIndex));
   trace('$click', {
     ...elPayload,
     ...posPayload,
@@ -377,8 +370,11 @@ const initIds = async () => {
 };
 
 // 初始化方法
+let isInited = false;
 const init = async (options) => {
   try {
+    if (isInited) return;
+    isInited = true;
     // 初始化并挂载选项
     state.options = options = Object.assign(defaultOptions, options);
 

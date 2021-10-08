@@ -16,9 +16,9 @@
 ### 全局非埋点属性
 
 ```txt
-$event    # Event 事件
-$vid      # VisitorId 访问者ID
-$uid      # UserId 用户ID
+$evt    # Event 事件类型
+$vid    # VisitorId 访问者id
+$uid    # UserId 用户ID
 ```
 
 ### 全局预置属性
@@ -36,7 +36,7 @@ $eng_v    # 浏览器引擎版本
 $tt       # 页面 title
 $url      # 页面 url
 $path     # 页面 path
-$cts      # 客户端时间戳
+$cs_ts    # 客户端侧时间戳
 $scr_w    # 屏幕宽度
 $scr_h    # 屏幕高度
 $scr_ori  # 屏幕方向
@@ -65,7 +65,7 @@ $ref # 来源页面
 ### $pagestay 页面停留预置属性
 
 ```txt
-$du # 页面停留时间
+$du # 页面停留时间，单位秒
 ```
 
 ## Methods
@@ -114,13 +114,17 @@ $du # 页面停留时间
 
 ```js
 // 手动触发$click事件
+
 // event 点击时的事件对象
+// payload 额外的信息负载
 ```
 
 ### tracePageview(payload, callback)
 
 ```js
 // 手动触发spa应用$pageview事件
+
+// payload 额外的信息负载
 ```
 
 ### tracePagestay(payload, callback)
