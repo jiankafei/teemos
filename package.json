@@ -2,7 +2,7 @@
   "name": "burypoint",
   "version": "1.0.0",
   "main": "dist/index.js",
-  "module": "dist/index.es.js",
+  "module": "dist/index.esm.js",
   "author": "ct",
   "license": "MIT",
   "scripts": {
