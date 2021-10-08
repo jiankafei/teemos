@@ -1,13 +1,13 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import burypoint from './burypoint.es';
+import burypoint from 'burypoint';
 
 burypoint.init({
   dsn: 'http://www.exp.com/dsn',
   click_attr_trace: ['data-bp-click'],
   click_class_trace: ['el-button'],
-  debug: true,
+  log: true,
 });
 
 Vue.config.productionTip = false

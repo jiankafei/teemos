@@ -31,8 +31,8 @@ const defaultOptions = {
   click_class_trace: [],
   // 是否开启收集兜底事件触发元素的点击，默认不开启
   click_target_trace: false,
-  // 开启调试
-  debug: false,
+  // 开启日志打印
+  log: false,
 };
 
 // 状态信息
