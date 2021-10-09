@@ -105,7 +105,7 @@ const trace = ($evt, payload, callback) => {
     ...payload,
   };
   // debug
-  if (state.options.debug) {
+  if (state.options.log) {
     console.log(info);
   }
   // 发送
@@ -287,7 +287,7 @@ const getTracedELInfo = (ev) => {
 // ev 点击事件的事件对象
 // payload 载荷信息，必须为 Object 对象
 const traceClick = (ev, payload, callback) => {
-  const tg = ev.currentTarget;
+  const tg = ev.tracedEL ?? ev.target;
   const composedPath = ev.composedPath ? ev.composedPath() : ev.path;
   const tracedELIndex = composedPath.findIndex((el) => el === tg);
   // 点击处在页面中的定位载荷
@@ -311,6 +311,7 @@ const autoTraceClick = () => {
     if (res) {
       const { tracedEL } = res;
       if (validLink(tracedEL)) {
+        ev.tracedEL = tracedEL;
         if (ev.defaultPrevented) {
           // 对于项目已经阻止的默认行为，不做任何多余操作，维持原有行为
           traceClick(ev);
@@ -344,6 +345,7 @@ const autoTraceClick = () => {
       const { tracedEL } = res;
       // 非 Beacon 发送方式，对于项目自行绑定的脚本跳转(location.href = '')，无能为力
       if (!validLink(tracedEL)) {
+        ev.tracedEL = tracedEL;
         traceClick(ev);
       }
     }
