@@ -9,6 +9,9 @@
     "watch": "rollup -c rollup.config.js -w",
     "build": "rimraf dist && rollup -c rollup.config.js"
   },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@babel/core": "^7.15.8",
     "@babel/preset-env": "^7.15.8",
