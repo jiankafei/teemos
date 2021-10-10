@@ -180,4 +180,4 @@ $du # 页面停留时间，单位秒
 
 ## example
 
-示例内的 burypoint.es.js 由工程生成，如需要运行示例，复制最新的 burypoint.es.js 到示例项目。
+请自行链接开发包进行验证
