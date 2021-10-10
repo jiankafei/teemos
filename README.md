@@ -177,7 +177,3 @@ $du # 页面停留时间，单位秒
 
 1. 不收集 body html 元素的点击事件
 2. click_target_trace: true 表示每次点击都会有兜底的 target 元素，作为点击信息上报元素。
-
-## example
-
-请自行链接开发包进行验证
