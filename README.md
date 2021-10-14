@@ -83,6 +83,10 @@ $du # 页面停留时间，单位秒
   send_type: 'beacon',
   // 是否自动收集页面浏览事件，默认开启
   pageview_auto_trace: true,
+  // 是否自动收集页面停留事件，默认开启
+  pagestay_auto_trace: true,
+  // 是否自动收集hashchange事件，默认关闭
+  hashchange_auto_trace: false,
   // 是否自动收集点击事件，默认开启
   click_auto_trace: true,
   // 收集包含有特定属性的元素的点击
@@ -130,7 +134,7 @@ $du # 页面停留时间，单位秒
 ### tracePagestay(payload, callback)
 
 ```js
-// 手动触发页面停留事件
+// 手动触发页面停留事件，只收集停留时间大于4s的情况
 ```
 
 ### setPageStartTime(timestamp)

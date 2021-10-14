@@ -108,3 +108,6 @@ export const validLink = (el) => {
     && !el.download
   );
 };
+
+// 是否是 safari
+export const IS_SAFARI = typeof window.safari === 'object' && window.safari.pushNotification;

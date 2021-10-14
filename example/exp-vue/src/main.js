@@ -1,9 +1,9 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import burypoint from 'burypoint';
+import teemos from 'teemos';
 
-burypoint.init({
+teemos.init({
   dsn: 'http://www.exp.com/dsn',
   click_attr_trace: ['data-bp-click'],
   click_class_trace: ['el-button'],

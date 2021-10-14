@@ -4,6 +4,7 @@ import {
   localStore,
   getComputedStyle,
   validLink,
+  IS_SAFARI,
 } from './utils';
 import pkg from '../package.json';
 
@@ -23,6 +24,8 @@ const defaultOptions = {
   pageview_auto_trace: true,
   // 是否自动收集页面停留事件，默认开启
   pagestay_auto_trace: true,
+  // 是否开启追踪hashchange事件，默认关闭
+  hashchange_auto_trace: false,
   // 是否自动收集点击事件，默认开启
   click_auto_trace: true,
   // 收集包含有特定属性的元素的点击
@@ -48,7 +51,7 @@ state.preset = {
   $br: browser.name,
   $br_v: browser.version,
   $eng: engine.name,
-  $eng_v: engine.version,
+  $eng_v: engine.version ?? '',
 };
 
 // 页面预置属性
@@ -131,7 +134,7 @@ const tracePageview = (payload, callback) => {
 // pagestay 页面停留时间事件
 const tracePagestay = (payload, callback) => {
   const $du = Date.now() - pageStartTime;
-  if ($du > 5000) {
+  if ($du > 4000) {
     trace('$pagestay', {
       $du: Math.round($du / 1000),
       ...payload,
@@ -145,28 +148,56 @@ const setPageStartTime = (time) => {
   pageStartTime = time;
 };
 
-// 自动收集页面浏览
-const autoTracePageview = () => {
-  // 初次加载触发pageview事件
-  tracePageview();
+// 页面隐藏
+const pageHide = (callback) => {
+  let safariBeforeUnloadTimeout = null;
+  if (IS_SAFARI) {
+    const handler = () => {
+      safariBeforeUnloadTimeout = setTimeout(() => {
+        console.log('beforeunload');
+        typeof callback === 'function' && callback();
+        window.removeEventListener('beforeunload', handler);
+      }, 0);
+    };
+    window.addEventListener('beforeunload', handler);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (IS_SAFARI) {
+      clearTimeout(safariBeforeUnloadTimeout);
+    }
+    if (document.visibilityState === 'visible') {
+      pageStartTime = Date.now();
+    }
+    if (document.visibilityState === 'hidden') {
+      console.log('visibilitychange: hidden');
+      typeof callback === 'function' && callback();
+    }
+  }, true);
+};
+
+// 历史记录变动
+const historyChange = (pageStart, pageChange, pageEnd) => {
+  pageStart();
 
   const historyPushState = window.history.pushState;
   const historyReplaceState = window.history.replaceState;
 
   window.history.pushState = (...rest) => {
     historyPushState.apply(window.history, rest);
-    tracePageview();
-    state.options.pagestay_auto_trace && tracePagestay();
+    pageChange();
   };
   window.history.replaceState = (...rest) => {
     historyReplaceState.apply(window.history, rest);
-    tracePageview();
-    state.options.pagestay_auto_trace && tracePagestay();
+    pageChange();
   };
   window.addEventListener('popstate', () => {
-    tracePageview();
-    state.options.pagestay_auto_trace && tracePagestay();
+    pageChange();
   });
+  state.options.hashchange_auto_trace && window.addEventListener('hashchange', () => {
+    pageChange();
+  });
+
+  pageHide(pageEnd);
 };
 
 // 获取选择器
@@ -390,17 +421,20 @@ const init = async (options) => {
     // 设置发送方法
     sendMethod = options.send_type === 'beacon' ? sendBeacon : sendImage;
 
-    // 设置收集单页应用浏览事件
-    if (options.pageview_auto_trace) {
-      autoTracePageview();
-    }
+    historyChange(() => {
+      options.pageview_auto_trace && tracePageview();
+    }, () => {
+      options.pageview_auto_trace && tracePageview();
+      options.pagestay_auto_trace && tracePagestay();
+    }, () => {
+      options.pagestay_auto_trace && tracePagestay();
+    });
 
-    // 设置收集元素点击事件
     if (options.click_auto_trace) {
       autoTraceClick();
     }
   } catch (error) {
-    console.warn(`bp init(): ${error.message}`);
+    console.warn(`teemos init(): ${error.message}`);
   }
 };
 
