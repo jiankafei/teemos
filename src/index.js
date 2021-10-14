@@ -154,7 +154,7 @@ const pageHide = (callback) => {
   if (IS_SAFARI) {
     const handler = () => {
       safariBeforeUnloadTimeout = setTimeout(() => {
-        console.log('beforeunload');
+        // console.log('beforeunload');
         typeof callback === 'function' && callback();
         window.removeEventListener('beforeunload', handler);
       }, 0);
@@ -169,7 +169,7 @@ const pageHide = (callback) => {
       pageStartTime = Date.now();
     }
     if (document.visibilityState === 'hidden') {
-      console.log('visibilitychange: hidden');
+      // console.log('visibilitychange: hidden');
       typeof callback === 'function' && callback();
     }
   }, true);
