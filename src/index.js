@@ -51,7 +51,6 @@ state.preset = {
   $br: browser.name,
   $br_v: browser.version,
   $eng: engine.name,
-  $eng_v: engine.version ?? '',
 };
 
 // 页面预置属性
@@ -60,10 +59,12 @@ const screenSize = {
   $scr_h: window.screen.height,
 };
 const getPagePresetProps = () => ({
-  $tt: document.title,
-  $url: location.href,
+  $title: document.title,
+  $origin: location.origin,
   $path: location.pathname,
-  $cs_ts: Date.now(),
+  $search: location.search,
+  $hash: location.hash,
+  $clnt_ts: Date.now(),
   ...screenSize,
   $scr_ori: window.screen.orientation.type,
 });

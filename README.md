@@ -32,11 +32,12 @@ $os_v     # 系统版本
 $br       # 浏览器品牌
 $br_v     # 浏览器版本
 $eng      # 浏览器引擎
-$eng_v    # 浏览器引擎版本
-$tt       # 页面 title
-$url      # 页面 url
+$title    # 页面 title
+$origin   # 页面 origin
 $path     # 页面 path
-$cs_ts    # 客户端侧时间戳
+#search   # 页面路径查询字符串
+$hash     # 页面 hash
+$clnt_ts  # 客户端侧时间戳
 $scr_w    # 屏幕宽度
 $scr_h    # 屏幕高度
 $scr_ori  # 屏幕方向
