@@ -1,13 +1,13 @@
 // 类型判断
-export const typeis = (obj) => Object.prototype.toString.call(obj).slice(8, -1);
-
-// 是否是真值
-export const isTruthy = (val) => val !== undefined && val !== null && val !== 'undefined' && val !== 'null' && val.trim() !== '';
+export const tpof = (obj) => Object.prototype.toString.call(obj).slice(8, -1);
 
 // 是否是假值
-export const isFalsy = (val) => val === undefined || val === null && val === 'undefined' || val === 'null' && val === '';
+export const isFalsy = (val) => val.trim() === '' || val === undefined || val === null || val === 'undefined' || val === 'null';
 
-// 获取代理信息
+// 是否是真值
+export const isTruthy = (val) => !isFalsy(val);
+
+// 获取代理信息，暂未使用
 export const parseUserAgent = () => {
   if (navigator.userAgentData) {
     return navigator.userAgentData.brands[2];
@@ -23,7 +23,7 @@ export const parseUserAgent = () => {
 
 // 本地存储
 const isSNBType = (obj) => {
-  const type = typeis(obj);
+  const type = tpof(obj);
   return type === 'String' || type === 'Number' || type === 'Boolean';
 };
 export const localStore = {
@@ -40,7 +40,7 @@ export const localStore = {
     if (isFalsy(key) || isFalsy(value)) return;
     try {
       value = isTruthy(value) ? value : '';
-      if (typeis(value) === 'Object' || Array.isArray(value)) {
+      if (tpof(value) === 'Object' || Array.isArray(value)) {
         value = JSON.stringify(value);
       } else if (!isSNBType(value)) {
         value = '';
@@ -63,7 +63,7 @@ export const localStore = {
   },
 };
 
-// 获取随机值
+// 获取随机值，暂未使用
 export const getRandomValue = () => {
   const array = new Uint32Array(3);
   window.crypto.getRandomValues(array);
@@ -108,3 +108,6 @@ export const validLink = (el) => {
     && !el.download
   );
 };
+
+// 是否是 safari
+export const IS_SAFARI = typeof window.safari === 'object' && window.safari.pushNotification;

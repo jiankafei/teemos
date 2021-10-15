@@ -1,9 +1,11 @@
 import json from '@rollup/plugin-json';
 import commonjs from '@rollup/plugin-commonjs';
-import resolve from '@rollup/plugin-node-resolve';
+import nodeResolve from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
+import eslint from '@rollup/plugin-eslint';
+import pkg from './package.json';
 
 const WATCH = process.env.ROLLUP_WATCH;
 
@@ -11,31 +13,31 @@ export default {
   input: 'src/index.js',
   output: [
     {
-      file: 'dist/burypoint.js',
-      name: 'barypoint',
+      file: pkg.main,
+      name: pkg.name,
       format: 'iife',
       sourcemap: !WATCH,
       strict: true,
     },
     {
-      file: 'dist/burypoint.es.js',
-      name: 'barypoint',
+      file: pkg.module,
       format: 'es',
       sourcemap: !WATCH,
       strict: true,
     },
   ],
   plugins: [
+    nodeResolve(),
     commonjs(),
-    resolve(),
     json(),
-    babel({
-      exclude: 'node_modules/**',
-      babelHelpers: 'bundled',
-    }),
+    eslint(),
     replace({
       preventAssignment: true,
       ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
+    }),
+    babel({
+      exclude: 'node_modules/**',
+      babelHelpers: 'bundled',
     }),
     !WATCH && terser(),
   ],

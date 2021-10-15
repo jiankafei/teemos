@@ -12,10 +12,10 @@
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module",
+    "allowImportExportEverywhere": true,
     "ecmaFeatures": {
-      "experimentalObjectRestSpread": true
-    },
-    "allowImportExportEverywhere": true
+      "impliedStrict": true
+    }
   },
   "rules": {
     "no-unused-vars": 0,

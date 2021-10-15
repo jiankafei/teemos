@@ -1,9 +1,10 @@
-# 埋点
+# 提莫
 
 ## 预置事件
 
 1. $click
 2. $pageview
+3. $pagestay
 
 预置事件可以通过配置自动开启。
 也可以调用方法手动开启。
@@ -15,26 +16,31 @@
 ### 全局非埋点属性
 
 ```txt
-$ev    # Event 事件
-$vid   # VisitorId 访问者id
+$evt    # Event 事件类型
+$vid    # VisitorId 访问者id
+$uid    # UserId 用户ID
 ```
 
 ### 全局预置属性
 
 ```txt
-$st       # sdk 类别，值为 web
-$sv       # sdk 版本
-$lg       # 浏览器语言
-$pf       # 平台
+$sdk      # sdk 类别，值为 web
+$sdk_v    # sdk 版本
+$lang     # 浏览器语言
 $os       # 系统
-$ov       # 系统版本
+$os_v     # 系统版本
 $br       # 浏览器品牌
-$bv       # 浏览器版本
-$eg       # 浏览器引擎
-$ev       # 浏览器引擎版本
-$tt       # 页面 title
-$url      # 页面 url
+$br_v     # 浏览器版本
+$eng      # 浏览器引擎
+$title    # 页面 title
+$origin   # 页面 origin
 $path     # 页面 path
+#search   # 页面路径查询字符串
+$hash     # 页面 hash
+$clnt_ts  # 客户端侧时间戳
+$scr_w    # 屏幕宽度
+$scr_h    # 屏幕高度
+$scr_ori  # 屏幕方向
 ```
 
 ### $click 事件预置属性
@@ -57,6 +63,12 @@ $page_y     # 点击的页面y轴坐标
 $ref # 来源页面
 ```
 
+### $pagestay 页面停留预置属性
+
+```txt
+$du # 页面停留时间，单位秒
+```
+
 ## Methods
 
 ### init(options)
@@ -72,6 +84,10 @@ $ref # 来源页面
   send_type: 'beacon',
   // 是否自动收集页面浏览事件，默认开启
   pageview_auto_trace: true,
+  // 是否自动收集页面停留事件，默认开启
+  pagestay_auto_trace: true,
+  // 是否自动收集hashchange事件，默认关闭
+  hashchange_auto_trace: false,
   // 是否自动收集点击事件，默认开启
   click_auto_trace: true,
   // 收集包含有特定属性的元素的点击
@@ -82,8 +98,10 @@ $ref # 来源页面
   click_target_trace: false,
   // 是否开启调试
   debug: false,
-  // 访问者ID，一般用于调试或者绑定用户ID
+  // 访问者ID，代表客户端代理
   vid: '',
+  // 用户ID，用于绑定用户ID
+  uid: '',
 };
 ```
 
@@ -97,7 +115,7 @@ $ref # 来源页面
 // callback 事件的回调函数
 ```
 
-### traceClick(event, payload)
+### traceClick(event, payload, callback)
 
 ```js
 // 手动触发$click事件
@@ -106,12 +124,24 @@ $ref # 来源页面
 // payload 额外的信息负载
 ```
 
-### tracePageview(payload)
+### tracePageview(payload, callback)
 
 ```js
 // 手动触发spa应用$pageview事件
 
 // payload 额外的信息负载
+```
+
+### tracePagestay(payload, callback)
+
+```js
+// 手动触发页面停留事件，只收集停留时间大于4s的情况
+```
+
+### setPageStartTime(timestamp)
+
+```js
+// 手动设置页面开始访问时间
 ```
 
 ### addPresetState(name, value)
@@ -122,10 +152,16 @@ $ref # 来源页面
 // value 预置属性值
 ```
 
+### setUserId(uid)
+
+```js
+// 手动设置 $uid ，表示当前用户
+```
+
 ### setVisitorId(id)
 
 ```js
-// 设置访问者ID，一般用于调试或者绑定用户ID
+// 设置访问者ID，代表当前客户端代理
 ```
 
 ## 自动收集 $click 点击事件介绍
@@ -144,7 +180,3 @@ $ref # 来源页面
 
 1. 不收集 body html 元素的点击事件
 2. click_target_trace: true 表示每次点击都会有兜底的 target 元素，作为点击信息上报元素。
-
-## example
-
-示例内的 burypoint.es.js 由工程生成，如需要运行示例，复制最新的 burypoint.es.js 到示例项目。
