@@ -88,10 +88,10 @@ const sendImage = (params, callback) => {
 // 通过 beacon 发送信息
 const sendBeacon = (params, callback) => {
   const usp = new URLSearchParams(params).toString();
-  navigator.sendBeacon(state.options.dsn, usp);
-  setTimeout(() => {
+  const isInQueue = navigator.sendBeacon(state.options.dsn, usp);
+  if (isInQueue) {
     typeof callback === 'function' && callback();
-  }, 0);
+  }
 };
 
 // 最终发送信息的方法
