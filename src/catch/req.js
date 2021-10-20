@@ -1,10 +1,13 @@
 // 覆写 XMLHttpRequest
 
+const methodSymbol = Symbol('method');
+const urlSymbol = Symbol('url');
+
 const originOpen = window.XMLHttpRequest.prototype.open;
 window.XMLHttpRequest.prototype.open = function(...rest) {
   const [method, url] = rest;
-  this.Method = method;
-  this.RequestURI = url;
+  this[methodSymbol] = method;
+  this[urlSymbol] = url;
   originOpen.apply(this, rest);
 };
 window.XMLHttpRequest = class XMLHttpRequest extends window.XMLHttpRequest {
